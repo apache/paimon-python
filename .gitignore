@@ -1,2 +1,4 @@
 .idea/
 !.idea/vcs.xml
+target
+dependency-reduced-pom.xml
