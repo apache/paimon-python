@@ -1,4 +1,16 @@
 .idea/
 !.idea/vcs.xml
+
+# paimon-python-java-bridge
 target
 dependency-reduced-pom.xml
+
+# Python building & testing
+.tox/
+build/
+dev/.conda
+dev/.stage.txt
+dev/download
+dev/log
+dist/
+paimon_python.egg-info/
