@@ -27,7 +27,7 @@ setup(
     install_requires=[],
     description='Apache Paimon Python API',
     author='Apache Software Foundation',
-    author_email='dev@flink.apache.org',
+    author_email='dev@paimon.apache.org',
     url='https://paimon.apache.org',
     classifiers=[
         'Development Status :: 5 - Production/Stable',

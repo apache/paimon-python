@@ -1,5 +1,3 @@
-<!-- Please specify the module before the PR name: [core] ... or [flink] ... -->
-
 ### Purpose
 
 <!-- Linking this pull request to the issue -->

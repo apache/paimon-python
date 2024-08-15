@@ -562,7 +562,7 @@ function check_stage() {
 ###############################################################All Checks Definitions###############################################################
 #########################
 # This part defines all check functions such as tox_check and flake8_check
-# We make a rule that all check functions are suffixed with _ check. e.g. tox_check, flake8_chek
+# We make a rule that all check functions are suffixed with _ check. e.g. tox_check, flake8_check
 #########################
 # Tox check
 function tox_check() {
@@ -571,15 +571,14 @@ function tox_check() {
     # Set created py-env in $PATH for tox's creating virtual env
     activate
     # Ensure the permission of the scripts set correctly
-    chmod +x $FLINK_PYTHON_DIR/../build-target/bin/*
-    chmod +x $FLINK_PYTHON_DIR/dev/*
+    chmod +x $PAIMON_PYTHON_DIR/dev/*
 
     if [[ ${BUILD_REASON} = 'IndividualCI' ]]; then
         # Only run test in latest python version triggered by a Git push
-        $TOX_PATH -vv -c $FLINK_PYTHON_DIR/tox.ini -e ${LATEST_PYTHON} --recreate 2>&1 | tee -a $LOG_FILE
+        $TOX_PATH -vv -c $PAIMON_PYTHON_DIR/tox.ini -e ${LATEST_PYTHON} --recreate 2>&1 | tee -a $LOG_FILE
     else
         # Only run random selected python version in nightly CI.
-        ENV_LIST_STRING=`$TOX_PATH -l -c $FLINK_PYTHON_DIR/tox.ini`
+        ENV_LIST_STRING=`$TOX_PATH -l -c $PAIMON_PYTHON_DIR/tox.ini`
         _OLD_IFS=$IFS
         IFS=$'\n'
         ENV_LIST=(${ENV_LIST_STRING})
@@ -587,7 +586,7 @@ function tox_check() {
 
         ENV_LIST_SIZE=${#ENV_LIST[@]}
         index=$(($RANDOM % ENV_LIST_SIZE))
-        $TOX_PATH -vv -c $FLINK_PYTHON_DIR/tox.ini -e ${ENV_LIST[$index]} --recreate 2>&1 | tee -a $LOG_FILE
+        $TOX_PATH -vv -c $PAIMON_PYTHON_DIR/tox.ini -e ${ENV_LIST[$index]} --recreate 2>&1 | tee -a $LOG_FILE
     fi
 
     TOX_RESULT=$((grep -c "congratulations :)" "$LOG_FILE") 2>&1)
@@ -658,8 +657,8 @@ function mypy_check() {
 # CURRENT_DIR is "paimon-python/dev/"
 CURRENT_DIR="$(cd "$( dirname "$0" )" && pwd)"
 
-# FLINK_PYTHON_DIR is "flink/flink-python"
-FLINK_PYTHON_DIR=$(dirname "$CURRENT_DIR")
+# PAIMON_PYTHON_DIR is "paimon-python/"
+PAIMON_PYTHON_DIR=$(dirname "$CURRENT_DIR")
 
 # conda home path
 if [ -z "${PAIMON_PYTHON_CONDA_HOME+x}" ]; then
@@ -810,7 +809,7 @@ if [[ ${CLEAN_UP_FLAG} -eq 1 ]]; then
     printf "clean up python environment"
     rm -rf ${CONDA_HOME}
     rm -rf ${STAGE_FILE}
-    rm -rf ${FLINK_PYTHON_DIR}/.tox
+    rm -rf ${PAIMON_PYTHON_DIR}/.tox
     skip_checks=1
 fi
 
@@ -836,7 +835,7 @@ if [[ ${CLEAN_UP_FLAG} -eq 0 ]]; then
     install_environment
 fi
 
-pushd "$FLINK_PYTHON_DIR" &> /dev/null
+pushd "$PAIMON_PYTHON_DIR" &> /dev/null
 # exec all selected checks
 if [ $skip_checks -eq 0 ]; then
     check_stage
