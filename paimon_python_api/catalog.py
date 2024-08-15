@@ -32,5 +32,5 @@ class Catalog(ABC):
         """Create catalog from configuration."""
 
     @abstractmethod
-    def get_table(self, identifier: tuple) -> Table:
+    def get_table(self, identifier: str) -> Table:
         """Get paimon table identified by the given Identifier."""

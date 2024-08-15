@@ -16,26 +16,24 @@
 # limitations under the License.
 ################################################################################
 
-name: Check Code Style & Run Tests
+import os
+import shutil
+import subprocess
+import tempfile
 
-on:
-  push:
-  pull_request:
-    paths-ignore:
-      - 'dev/**'
-      - 'java_based_implementation/paimon-python-java-bridge/**'
-      - '**/*.md'
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.run_id }}
-  cancel-in-progress: true
-
-jobs:
-  lint-python:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Run lint-python.sh
-        run: |
-          chmod +x dev/lint-python.sh
-          ./dev/lint-python.sh
+def set_bridge_jar() -> str:
+    java_module = '../paimon-python-java-bridge'
+    # build paimon-python-java-bridge
+    subprocess.run(
+        ["mvn", "clean", "package"],
+        cwd=java_module,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    jar_name = 'paimon-python-java-bridge-0.9-SNAPSHOT.jar'
+    jar_file = os.path.join(java_module, 'target', jar_name)
+    # move to temp dir
+    temp_dir = tempfile.mkdtemp()
+    shutil.move(jar_file, temp_dir)
+    return os.path.join(temp_dir, jar_name)
