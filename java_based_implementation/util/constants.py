@@ -16,26 +16,9 @@
 # limitations under the License.
 ################################################################################
 
-name: Check Code Style & Run Tests
-
-on:
-  push:
-  pull_request:
-    paths-ignore:
-      - 'dev/**'
-      - 'java_based_implementation/paimon-python-java-bridge/**'
-      - '**/*.md'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.run_id }}
-  cancel-in-progress: true
-
-jobs:
-  lint-python:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Run lint-python.sh
-        run: |
-          chmod +x dev/lint-python.sh
-          ./dev/lint-python.sh
+# ---------------------------- for env var ----------------------------
+PYPAIMON_CONN_INFO_PATH = '_PYPAIMON_CONN_INFO_PATH'
+PYPAIMON_JVM_ARGS = '_PYPAIMON_JVM_ARGS'
+PYPAIMON_JAVA_CLASSPATH = '_PYPAIMON_JAVA_CLASSPATH'
+PYPAIMON_MAIN_CLASS = 'org.apache.paimon.python.PythonGatewayServer'
+PYPAIMON_MAIN_ARGS = '_PYPAIMON_MAIN_ARGS'

@@ -16,26 +16,10 @@
 # limitations under the License.
 ################################################################################
 
-name: Check Code Style & Run Tests
+from java_based_implementation.java_gateway import get_gateway
 
-on:
-  push:
-  pull_request:
-    paths-ignore:
-      - 'dev/**'
-      - 'java_based_implementation/paimon-python-java-bridge/**'
-      - '**/*.md'
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.run_id }}
-  cancel-in-progress: true
-
-jobs:
-  lint-python:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Run lint-python.sh
-        run: |
-          chmod +x dev/lint-python.sh
-          ./dev/lint-python.sh
+def to_j_catalog_context(catalog_context: dict):
+    gateway = get_gateway()
+    j_options = gateway.jvm.Options(catalog_context)
+    return gateway.jvm.CatalogContext.create(j_options)

@@ -31,7 +31,7 @@ We can use `py4j` to leverage Java code to read Paimon data. This section descri
 ### Build paimon-python-java-bridge
 
 ```bash
-cd java-based-implementation/paimon-python-java-bridge/
+cd java_based_implementation/paimon-python-java-bridge/
 mvn clean install -DskipTests
 ```
 The built target is java-based-implementation/paimon-python-java-bridge/target/paimon-python-java-bridge-<version>.jar

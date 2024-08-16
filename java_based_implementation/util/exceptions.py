@@ -16,26 +16,16 @@
 # limitations under the License.
 ################################################################################
 
-name: Check Code Style & Run Tests
+import py4j
 
-on:
-  push:
-  pull_request:
-    paths-ignore:
-      - 'dev/**'
-      - 'java_based_implementation/paimon-python-java-bridge/**'
-      - '**/*.md'
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.run_id }}
-  cancel-in-progress: true
+def install_py4j_hooks():
+    """
+    Hook the classes such as JavaPackage, etc of Py4j to improve the exception message.
+    """
+    def wrapped_call(self, *args, **kwargs):
+        raise TypeError(
+            "Could not found the Java class '%s'. The Java dependencies could be specified via "
+            "command line argument '--jarfile' or the config option 'pipeline.jars'" % self._fqn)
 
-jobs:
-  lint-python:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Run lint-python.sh
-        run: |
-          chmod +x dev/lint-python.sh
-          ./dev/lint-python.sh
+    setattr(py4j.java_gateway.JavaPackage, '__call__', wrapped_call)
