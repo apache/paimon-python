@@ -16,18 +16,8 @@
 # limitations under the License.
 #################################################################################
 
-from abc import ABC, abstractmethod
-from read_builder import ReadBuilder
-from write_builder import BatchWriteBuilder
+from abc import ABC
 
 
-class Table(ABC):
-    """A table provides basic abstraction for table read and write."""
-
-    @abstractmethod
-    def new_read_builder(self) -> ReadBuilder:
-        """Return a builder for building table scan and table read."""
-
-    @abstractmethod
-    def new_batch_write_builder(self) -> BatchWriteBuilder:
-        """Returns a builder for building batch table write and table commit."""
+class CommitMessage(ABC):
+    """Commit message collected from writer."""

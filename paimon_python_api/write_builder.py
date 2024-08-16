@@ -17,17 +17,25 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from read_builder import ReadBuilder
-from write_builder import BatchWriteBuilder
+from table_commit import BatchTableCommit
+from table_write import BatchTableWrite
+from typing_extensions import Self
 
 
-class Table(ABC):
-    """A table provides basic abstraction for table read and write."""
-
-    @abstractmethod
-    def new_read_builder(self) -> ReadBuilder:
-        """Return a builder for building table scan and table read."""
+class BatchWriteBuilder(ABC):
+    """An interface for building the TableScan and TableRead."""
 
     @abstractmethod
-    def new_batch_write_builder(self) -> BatchWriteBuilder:
-        """Returns a builder for building batch table write and table commit."""
+    def with_overwrite(self, static_partition: dict) -> Self:
+        """
+        Overwrite writing, same as the 'INSERT OVERWRITE T PARTITION (...)' semantics of SQL.
+        If you pass an empty dict, it means OVERWRITE whole table.
+        """
+
+    @abstractmethod
+    def new_write(self) -> BatchTableWrite:
+        """Create a BatchTableWrite to perform batch writing."""
+
+    @abstractmethod
+    def new_commit(self) -> BatchTableCommit:
+        """Create a BatchTableCommit to perform batch commiting."""

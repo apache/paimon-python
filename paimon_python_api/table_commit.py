@@ -17,17 +17,16 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from read_builder import ReadBuilder
-from write_builder import BatchWriteBuilder
+from commit_message import CommitMessage
+from typing import List
 
 
-class Table(ABC):
-    """A table provides basic abstraction for table read and write."""
-
-    @abstractmethod
-    def new_read_builder(self) -> ReadBuilder:
-        """Return a builder for building table scan and table read."""
+class BatchTableCommit(ABC):
+    """A table commit for batch processing. Recommended for one-time committing."""
 
     @abstractmethod
-    def new_batch_write_builder(self) -> BatchWriteBuilder:
-        """Returns a builder for building batch table write and table commit."""
+    def commit(self, commit_messages: List[CommitMessage]):
+        """
+        Commit the commit messages to generate snapshots. One commit may generate
+        up to two snapshots, one for adding new files and the other for compaction.
+        """
