@@ -17,7 +17,7 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from commit_message import CommitMessage
+from paimon_python_api.commit_message import CommitMessage
 from pyarrow import RecordBatch
 from typing import List
 

@@ -17,21 +17,20 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from table_read import TableRead
-from table_scan import TableScan
+from paimon_python_api.table_read import TableRead
+from paimon_python_api.table_scan import TableScan
 from typing import List
-from typing_extensions import Self
 
 
 class ReadBuilder(ABC):
     """An interface for building the TableScan and TableRead."""
 
     @abstractmethod
-    def with_projection(self, projection: List[List[int]]) -> Self:
+    def with_projection(self, projection: List[List[int]]) -> 'ReadBuilder':
         """Push nested projection."""
 
     @abstractmethod
-    def with_limit(self, limit: int) -> Self:
+    def with_limit(self, limit: int) -> 'ReadBuilder':
         """Push row number."""
 
     @abstractmethod
