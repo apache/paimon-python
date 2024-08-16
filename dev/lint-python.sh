@@ -366,6 +366,7 @@ function install_environment() {
     if [ "$os_index" -eq 1 ] && [ ! -f /usr/local/bin/md5 ]; then
        echo "Creating symlink for md5 to md5sum..."
        sudo ln -s $(which md5sum) /usr/local/bin/md5
+    fi
 
     # step-1 install wget
     # the file size of the miniconda.sh is too big to use "wget" tool to download instead
