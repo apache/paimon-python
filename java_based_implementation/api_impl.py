@@ -22,7 +22,6 @@ from paimon_python_api import (catalog, table, read_builder, table_scan, split, 
                                write_builder, table_write, commit_message, table_commit)
 from pyarrow import RecordBatchReader, RecordBatch
 from typing import List
-from typing_extensions import Self
 
 
 class Catalog(catalog.Catalog):
@@ -37,7 +36,7 @@ class Catalog(catalog.Catalog):
         j_catalog = gateway.jvm.CatalogFactory.createCatalog(j_catalog_context)
         return Catalog(j_catalog)
 
-    def get_table(self, identifier: tuple) -> 'Table':
+    def get_table(self, identifier: str) -> 'Table':
         gateway = get_gateway()
         j_identifier = gateway.jvm.Identifier.fromString(identifier)
         j_table = self._j_catalog.getTable(j_identifier)
@@ -63,11 +62,11 @@ class ReadBuilder(read_builder.ReadBuilder):
     def __init__(self, j_read_builder):
         self._j_read_builder = j_read_builder
 
-    def with_projection(self, projection: List[List[int]]) -> Self:
+    def with_projection(self, projection: List[List[int]]) -> 'ReadBuilder':
         self._j_read_builder.withProjection(projection)
         return self
 
-    def with_limit(self, limit: int) -> Self:
+    def with_limit(self, limit: int) -> 'ReadBuilder':
         self._j_read_builder.withLimit(limit)
         return self
 
@@ -121,7 +120,7 @@ class BatchWriteBuilder(write_builder.BatchWriteBuilder):
     def __init__(self, j_batch_write_builder):
         self._j_batch_write_builder = j_batch_write_builder
 
-    def with_overwrite(self, static_partition: dict) -> Self:
+    def with_overwrite(self, static_partition: dict) -> 'BatchWriteBuilder':
         self._j_batch_write_builder.withOverwrite(static_partition)
         return self
 

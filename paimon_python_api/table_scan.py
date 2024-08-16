@@ -18,8 +18,7 @@
 
 from abc import ABC, abstractmethod
 from typing import List
-
-from split import Split
+from paimon_python_api.split import Split
 
 
 class TableScan(ABC):

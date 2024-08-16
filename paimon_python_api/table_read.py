@@ -18,7 +18,7 @@
 
 from abc import ABC, abstractmethod
 from pyarrow import RecordBatchReader
-from split import Split
+from paimon_python_api.split import Split
 
 
 class TableRead(ABC):
