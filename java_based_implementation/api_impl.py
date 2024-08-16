@@ -18,9 +18,9 @@
 
 from java_based_implementation.java_gateway import get_gateway
 from java_based_implementation.util.java_utils import to_j_catalog_context
-from paimon_python_api import catalog, read_builder, table_scan, split, table_read
-from paimon_python_api import table
-from pyarrow import RecordBatchReader
+from paimon_python_api import (catalog, table, read_builder, table_scan, split, table_read,
+                               write_builder, table_write, commit_message, table_commit)
+from pyarrow import RecordBatchReader, RecordBatch
 from typing import List
 from typing_extensions import Self
 
@@ -52,6 +52,10 @@ class Table(table.Table):
     def new_read_builder(self) -> 'ReadBuilder':
         j_read_builder = self._j_table.newReadBuilder()
         return ReadBuilder(j_read_builder)
+
+    def new_batch_write_builder(self) -> 'BatchWriteBuilder':
+        j_batch_write_builder = self._j_table.newBatchWriteBuilder()
+        return BatchWriteBuilder(j_batch_write_builder)
 
 
 class ReadBuilder(read_builder.ReadBuilder):
@@ -110,3 +114,54 @@ class TableRead(table_read.TableRead):
     def create_reader(self, split: Split) -> RecordBatchReader:
         # TODO
         pass
+
+
+class BatchWriteBuilder(write_builder.BatchWriteBuilder):
+
+    def __init__(self, j_batch_write_builder):
+        self._j_batch_write_builder = j_batch_write_builder
+
+    def with_overwrite(self, static_partition: dict) -> Self:
+        self._j_batch_write_builder.withOverwrite(static_partition)
+        return self
+
+    def new_write(self) -> 'BatchTableWrite':
+        j_batch_table_write = self._j_batch_write_builder.newWrite()
+        return BatchTableWrite(j_batch_table_write)
+
+    def new_commit(self) -> 'BatchTableCommit':
+        j_batch_table_commit = self._j_batch_write_builder.newCommit()
+        return BatchTableCommit(j_batch_table_commit)
+
+
+class BatchTableWrite(table_write.BatchTableWrite):
+
+    def __init__(self, j_batch_table_write):
+        self._j_batch_table_write = j_batch_table_write
+
+    def write(self, record_batch: RecordBatch):
+        # TODO
+        pass
+
+    def prepare_commit(self) -> List['CommitMessage']:
+        j_commit_messages = self._j_batch_table_write.prepareCommit()
+        return list(map(lambda cm: CommitMessage(cm), j_commit_messages))
+
+
+class CommitMessage(commit_message.CommitMessage):
+
+    def __init__(self, j_commit_message):
+        self._j_commit_message = j_commit_message
+
+    def to_j_commit_message(self):
+        return self._j_commit_message
+
+
+class BatchTableCommit(table_commit.BatchTableCommit):
+
+    def __init__(self, j_batch_table_commit):
+        self._j_batch_table_commit = j_batch_table_commit
+
+    def commit(self, commit_messages: List[CommitMessage]):
+        j_commit_messages = list(map(lambda cm: cm.to_j_commit_message(), commit_messages))
+        self._j_batch_table_commit.commit(j_commit_messages)

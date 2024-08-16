@@ -149,9 +149,9 @@ function get_os_index() {
     local sys_os=$(uname -s)
     echo "Detected OS: ${sys_os}"
     if [ ${sys_os} == "Darwin" ]; then
-        return 0
+        echo 0
     elif [[ ${sys_os} == "Linux" ]]; then
-        return 1
+        echo 1
     else
         echo "Unsupported OS: ${sys_os}"
         exit 1
@@ -360,8 +360,13 @@ function install_environment() {
     print_function "STAGE" "installing environment"
 
     #get the index of the SUPPORT_OS array for convenient to install tool.
-    get_os_index $sys_os
-    local os_index=$?
+    local os_index=$(get_os_index | tail -n1)
+
+    # In some Linux distributions, md5sum is installed instead of md5. But our miniconda installation shell uses md5
+    if [ "$os_index" -eq 1 ] && [ ! -f /usr/local/bin/md5 ]; then
+       echo "Creating symlink for md5 to md5sum..."
+       sudo ln -s $(which md5sum) /usr/local/bin/md5
+    fi
 
     # step-1 install wget
     # the file size of the miniconda.sh is too big to use "wget" tool to download instead

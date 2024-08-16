@@ -14,30 +14,28 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 # limitations under the License.
-################################################################################
+#################################################################################
 
-name: Check Code Style & Run Tests
+from abc import ABC, abstractmethod
+from table_commit import BatchTableCommit
+from table_write import BatchTableWrite
+from typing_extensions import Self
 
-on:
-  push:
-  pull_request:
-    paths-ignore:
-      - 'dev/**'
-      - 'java_based_implementation/paimon-python-java-bridge/**'
-      - '**/*.md'
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.run_id }}
-  cancel-in-progress: true
+class BatchWriteBuilder(ABC):
+    """An interface for building the TableScan and TableRead."""
 
-jobs:
-  lint-python:
-    runs-on: ubuntu-latest
+    @abstractmethod
+    def with_overwrite(self, static_partition: dict) -> Self:
+        """
+        Overwrite writing, same as the 'INSERT OVERWRITE T PARTITION (...)' semantics of SQL.
+        If you pass an empty dict, it means OVERWRITE whole table.
+        """
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Run lint-python.sh
-        run: |
-          chmod +x dev/lint-python.sh
-          ./dev/lint-python.sh
+    @abstractmethod
+    def new_write(self) -> BatchTableWrite:
+        """Create a BatchTableWrite to perform batch writing."""
+
+    @abstractmethod
+    def new_commit(self) -> BatchTableCommit:
+        """Create a BatchTableCommit to perform batch commiting."""

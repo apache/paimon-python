@@ -14,30 +14,21 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 # limitations under the License.
-################################################################################
+#################################################################################
 
-name: Check Code Style & Run Tests
+from abc import ABC, abstractmethod
+from commit_message import CommitMessage
+from pyarrow import RecordBatch
+from typing import List
 
-on:
-  push:
-  pull_request:
-    paths-ignore:
-      - 'dev/**'
-      - 'java_based_implementation/paimon-python-java-bridge/**'
-      - '**/*.md'
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.run_id }}
-  cancel-in-progress: true
+class BatchTableWrite(ABC):
+    """A table write for batch processing. Recommended for one-time committing."""
 
-jobs:
-  lint-python:
-    runs-on: ubuntu-latest
+    @abstractmethod
+    def write(self, record_batch: RecordBatch):
+        """ Write a batch to the writer. */"""
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Run lint-python.sh
-        run: |
-          chmod +x dev/lint-python.sh
-          ./dev/lint-python.sh
+    @abstractmethod
+    def prepare_commit(self) -> List[CommitMessage]:
+        """Prepare commit message for TableCommit. Collect incremental files for this writer."""

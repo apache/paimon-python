@@ -14,30 +14,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 # limitations under the License.
-################################################################################
+#################################################################################
 
-name: Check Code Style & Run Tests
+from abc import ABC
 
-on:
-  push:
-  pull_request:
-    paths-ignore:
-      - 'dev/**'
-      - 'java_based_implementation/paimon-python-java-bridge/**'
-      - '**/*.md'
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.run_id }}
-  cancel-in-progress: true
-
-jobs:
-  lint-python:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Run lint-python.sh
-        run: |
-          chmod +x dev/lint-python.sh
-          ./dev/lint-python.sh
+class CommitMessage(ABC):
+    """Commit message collected from writer."""

@@ -18,6 +18,7 @@
 
 from abc import ABC, abstractmethod
 from read_builder import ReadBuilder
+from write_builder import BatchWriteBuilder
 
 
 class Table(ABC):
@@ -26,3 +27,7 @@ class Table(ABC):
     @abstractmethod
     def new_read_builder(self) -> ReadBuilder:
         """Return a builder for building table scan and table read."""
+
+    @abstractmethod
+    def new_batch_write_builder(self) -> BatchWriteBuilder:
+        """Returns a builder for building batch table write and table commit."""
