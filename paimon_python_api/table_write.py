@@ -32,3 +32,7 @@ class BatchTableWrite(ABC):
     @abstractmethod
     def prepare_commit(self) -> List[CommitMessage]:
         """Prepare commit message for TableCommit. Collect incremental files for this writer."""
+
+    @abstractmethod
+    def close(self):
+        """Close this resource."""

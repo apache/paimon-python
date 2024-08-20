@@ -101,9 +101,14 @@ def launch_gateway():
     return gateway
 
 
-# TODO: import more
 def import_paimon_view(gateway):
     java_import(gateway.jvm, "org.apache.paimon.table.*")
+    java_import(gateway.jvm, "org.apache.paimon.options.Options")
+    java_import(gateway.jvm, "org.apache.paimon.catalog.*")
+    java_import(gateway.jvm, "org.apache.paimon.schema.Schema*")
+    java_import(gateway.jvm, 'org.apache.paimon.types.*')
+    java_import(gateway.jvm, 'org.apache.paimon.python.InvocationUtil')
+    java_import(gateway.jvm, "org.apache.paimon.data.*")
 
 
 class Watchdog(object):
