@@ -57,7 +57,7 @@ public class BytesReader {
     }
 
     @Nullable
-    public byte[] next() {
+    public byte[] next() throws Exception {
         if (nextRow == null) {
             return null;
         }
@@ -72,6 +72,11 @@ public class BytesReader {
         vsr.setRowCount(rowCount);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ArrowUtils.serializeToIpc(vsr, out);
+        if (nextRow == null) {
+            // close resource
+            arrowFormatWriter.close();
+            iterator.close();
+        }
         return out.toByteArray();
     }
 
@@ -81,10 +86,5 @@ public class BytesReader {
         } else {
             nextRow = null;
         }
-    }
-
-    public void close() throws Exception {
-        arrowFormatWriter.close();
-        iterator.close();
     }
 }

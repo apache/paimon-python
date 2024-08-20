@@ -136,5 +136,3 @@ class TableWriteReadTest(unittest.TestCase):
 
         # check data
         pd.testing.assert_frame_equal(result, df)
-
-        table_read.close()

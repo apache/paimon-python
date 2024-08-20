@@ -27,7 +27,3 @@ class TableRead(ABC):
     @abstractmethod
     def create_reader(self, split: Split) -> RecordBatchReader:
         """Return a reader containing batches of pyarrow format."""
-
-    @abstractmethod
-    def close(self):
-        """Close this resource."""

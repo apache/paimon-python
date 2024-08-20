@@ -150,9 +150,6 @@ class TableRead(table_read.TableRead):
         empty_reader = pa.RecordBatchReader.from_batches(schema, [empty_batch])
         return empty_reader
 
-    def close(self):
-        self._j_bytes_reader.close()
-
 
 class BatchWriteBuilder(write_builder.BatchWriteBuilder):
 
