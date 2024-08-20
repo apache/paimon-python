@@ -30,3 +30,7 @@ class BatchTableCommit(ABC):
         Commit the commit messages to generate snapshots. One commit may generate
         up to two snapshots, one for adding new files and the other for compaction.
         """
+
+    @abstractmethod
+    def close(self):
+        """Close this resource."""

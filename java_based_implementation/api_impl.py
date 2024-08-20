@@ -20,7 +20,8 @@ from java_based_implementation.java_gateway import get_gateway
 from java_based_implementation.util.java_utils import to_j_catalog_context
 from paimon_python_api import (catalog, table, read_builder, table_scan, split, table_read,
                                write_builder, table_write, commit_message, table_commit)
-from pyarrow import RecordBatchReader, RecordBatch
+from pyarrow import (RecordBatch, BufferOutputStream, RecordBatchStreamWriter,
+                     RecordBatchStreamReader, BufferReader)
 from typing import List
 
 
@@ -49,18 +50,19 @@ class Table(table.Table):
         self._j_table = j_table
 
     def new_read_builder(self) -> 'ReadBuilder':
-        j_read_builder = self._j_table.newReadBuilder()
-        return ReadBuilder(j_read_builder)
+        j_read_builder = get_gateway().jvm.InvocationUtil.getReadBuilder(self._j_table)
+        return ReadBuilder(j_read_builder, self._j_table.rowType())
 
     def new_batch_write_builder(self) -> 'BatchWriteBuilder':
-        j_batch_write_builder = self._j_table.newBatchWriteBuilder()
-        return BatchWriteBuilder(j_batch_write_builder)
+        j_batch_write_builder = get_gateway().jvm.InvocationUtil.getBatchWriteBuilder(self._j_table)
+        return BatchWriteBuilder(j_batch_write_builder, self._j_table.rowType())
 
 
 class ReadBuilder(read_builder.ReadBuilder):
 
-    def __init__(self, j_read_builder):
+    def __init__(self, j_read_builder, j_row_type):
         self._j_read_builder = j_read_builder
+        self._j_row_type = j_row_type
 
     def with_projection(self, projection: List[List[int]]) -> 'ReadBuilder':
         self._j_read_builder.withProjection(projection)
@@ -75,8 +77,8 @@ class ReadBuilder(read_builder.ReadBuilder):
         return TableScan(j_table_scan)
 
     def new_read(self) -> 'TableRead':
-        # TODO
-        pass
+        j_table_read = self._j_read_builder.newRead()
+        return TableRead(j_table_read, self._j_row_type)
 
 
 class TableScan(table_scan.TableScan):
@@ -110,15 +112,54 @@ class Split(split.Split):
 
 class TableRead(table_read.TableRead):
 
-    def create_reader(self, split: Split) -> RecordBatchReader:
-        # TODO
-        pass
+    def __init__(self, j_table_read, j_row_type):
+        self._j_table_read = j_table_read
+        self._j_bytes_reader = get_gateway().jvm.InvocationUtil.createBytesReader(
+            j_table_read, j_row_type)
+
+    def create_reader(self, split: Split):
+        self._j_bytes_reader.setSplit(split.to_j_split())
+        return BatchReader(self._j_bytes_reader)
+
+    def close(self):
+        self._j_bytes_reader.close()
+
+
+class BatchReader(table_read.BatchReader):
+
+    def __init__(self, j_bytes_reader):
+        self._j_bytes_reader = j_bytes_reader
+        self._inited = False
+        self._has_next = True
+        self._next_arrow_reader()
+
+    def next_batch(self):
+        if not self._has_next:
+            return None
+
+        try:
+            return self._current_arrow_reader.read_next_batch()
+        except StopIteration:
+            self._current_arrow_reader.close()
+            self._next_arrow_reader()
+            if not self._has_next:
+                return None
+            else:
+                return self._current_arrow_reader.read_next_batch()
+
+    def _next_arrow_reader(self):
+        byte_array = self._j_bytes_reader.next()
+        if byte_array is None:
+            self._has_next = False
+        else:
+            self._current_arrow_reader = RecordBatchStreamReader(BufferReader(byte_array))
 
 
 class BatchWriteBuilder(write_builder.BatchWriteBuilder):
 
-    def __init__(self, j_batch_write_builder):
+    def __init__(self, j_batch_write_builder, j_row_type):
         self._j_batch_write_builder = j_batch_write_builder
+        self._j_row_type = j_row_type
 
     def with_overwrite(self, static_partition: dict) -> 'BatchWriteBuilder':
         self._j_batch_write_builder.withOverwrite(static_partition)
@@ -126,7 +167,7 @@ class BatchWriteBuilder(write_builder.BatchWriteBuilder):
 
     def new_write(self) -> 'BatchTableWrite':
         j_batch_table_write = self._j_batch_write_builder.newWrite()
-        return BatchTableWrite(j_batch_table_write)
+        return BatchTableWrite(j_batch_table_write, self._j_row_type)
 
     def new_commit(self) -> 'BatchTableCommit':
         j_batch_table_commit = self._j_batch_write_builder.newCommit()
@@ -135,16 +176,26 @@ class BatchWriteBuilder(write_builder.BatchWriteBuilder):
 
 class BatchTableWrite(table_write.BatchTableWrite):
 
-    def __init__(self, j_batch_table_write):
+    def __init__(self, j_batch_table_write, j_row_type):
         self._j_batch_table_write = j_batch_table_write
+        self._j_bytes_writer = get_gateway().jvm.InvocationUtil.createBytesWriter(
+            j_batch_table_write, j_row_type)
 
     def write(self, record_batch: RecordBatch):
-        # TODO
-        pass
+        stream = BufferOutputStream()
+        with RecordBatchStreamWriter(stream, record_batch.schema) as writer:
+            writer.write(record_batch)
+            writer.close()
+        arrow_bytes = stream.getvalue().to_pybytes()
+        self._j_bytes_writer.write(arrow_bytes)
 
     def prepare_commit(self) -> List['CommitMessage']:
         j_commit_messages = self._j_batch_table_write.prepareCommit()
         return list(map(lambda cm: CommitMessage(cm), j_commit_messages))
+
+    def close(self):
+        self._j_batch_table_write.close()
+        self._j_bytes_writer.close()
 
 
 class CommitMessage(commit_message.CommitMessage):
@@ -164,3 +215,6 @@ class BatchTableCommit(table_commit.BatchTableCommit):
     def commit(self, commit_messages: List[CommitMessage]):
         j_commit_messages = list(map(lambda cm: cm.to_j_commit_message(), commit_messages))
         self._j_batch_table_commit.commit(j_commit_messages)
+
+    def close(self):
+        self._j_batch_table_commit.close()
