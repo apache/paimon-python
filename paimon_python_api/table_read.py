@@ -17,26 +17,17 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from pyarrow import RecordBatch
+from pyarrow import RecordBatchReader
 from paimon_python_api.split import Split
-from typing import Union
 
 
 class TableRead(ABC):
     """To read data from data splits."""
 
     @abstractmethod
-    def create_reader(self, split: Split) -> 'BatchReader':
+    def create_reader(self, split: Split) -> RecordBatchReader:
         """Return a reader containing batches of pyarrow format."""
 
     @abstractmethod
     def close(self):
         """Close this resource."""
-
-
-class BatchReader(ABC):
-    """Reader to get RecordBatch."""
-
-    @abstractmethod
-    def next_batch(self) -> Union[RecordBatch, None]:
-        """Get next RecordBatch. Return NONE if there is no more data."""

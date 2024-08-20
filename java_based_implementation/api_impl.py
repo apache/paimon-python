@@ -21,8 +21,8 @@ from java_based_implementation.util.java_utils import to_j_catalog_context
 from paimon_python_api import (catalog, table, read_builder, table_scan, split, table_read,
                                write_builder, table_write, commit_message, table_commit)
 from pyarrow import (RecordBatch, BufferOutputStream, RecordBatchStreamWriter,
-                     RecordBatchStreamReader, BufferReader)
-from typing import List
+                     RecordBatchStreamReader, BufferReader, RecordBatchReader)
+from typing import List, Iterator
 
 
 class Catalog(catalog.Catalog):
@@ -119,40 +119,25 @@ class TableRead(table_read.TableRead):
 
     def create_reader(self, split: Split):
         self._j_bytes_reader.setSplit(split.to_j_split())
-        return BatchReader(self._j_bytes_reader)
+        batches = []
+        schema = None
+        for arrow_bytes in self._bytes_generator():
+            stream_reader = RecordBatchStreamReader(BufferReader(arrow_bytes))
+            if schema is None:
+                schema = stream_reader.schema
+            batches.extend(batch for batch in stream_reader)
+        return RecordBatchReader.from_batches(schema, batches)
+
+    def _bytes_generator(self) -> Iterator[bytes]:
+        while True:
+            next_bytes = self._j_bytes_reader.next()
+            if next_bytes is None:
+                break
+            else:
+                yield next_bytes
 
     def close(self):
         self._j_bytes_reader.close()
-
-
-class BatchReader(table_read.BatchReader):
-
-    def __init__(self, j_bytes_reader):
-        self._j_bytes_reader = j_bytes_reader
-        self._inited = False
-        self._has_next = True
-        self._next_arrow_reader()
-
-    def next_batch(self):
-        if not self._has_next:
-            return None
-
-        try:
-            return self._current_arrow_reader.read_next_batch()
-        except StopIteration:
-            self._current_arrow_reader.close()
-            self._next_arrow_reader()
-            if not self._has_next:
-                return None
-            else:
-                return self._current_arrow_reader.read_next_batch()
-
-    def _next_arrow_reader(self):
-        byte_array = self._j_bytes_reader.next()
-        if byte_array is None:
-            self._has_next = False
-        else:
-            self._current_arrow_reader = RecordBatchStreamReader(BufferReader(byte_array))
 
 
 class BatchWriteBuilder(write_builder.BatchWriteBuilder):

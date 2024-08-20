@@ -66,19 +66,14 @@ class TableWriteReadTest(unittest.TestCase):
         read_builder = table.new_read_builder()
         table_scan = read_builder.new_scan()
         table_read = read_builder.new_read()
-
         splits = table_scan.plan().splits()
-        batches = []
-        for split in splits:
-            batch_reader = table_read.create_reader(split)
-            while True:
-                batch = batch_reader.next_batch()
-                if batch is None:
-                    break
-                else:
-                    batches.append(batch.to_pandas())
 
-        result = pd.concat(batches)
+        data_frames = [
+            batch.to_pandas()
+            for split in splits
+            for batch in table_read.create_reader(split)
+        ]
+        result = pd.concat(data_frames)
 
         # check data
         pd.testing.assert_frame_equal(result, df)
