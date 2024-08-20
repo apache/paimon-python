@@ -59,7 +59,7 @@ def create_simple_table(warehouse, database, table_name, has_pk):
         .option('bucket-key', 'f0')
     )
     if has_pk:
-        j_schema_builder.primaryKey('f0')
+        j_schema_builder.primaryKey(['f0'])
     j_schema = j_schema_builder.build()
 
     j_catalog.createDatabase(database, True)

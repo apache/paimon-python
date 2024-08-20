@@ -22,9 +22,10 @@ import unittest
 import pandas as pd
 import pyarrow as pa
 
-from java_based_implementation.api_impl import Catalog
+from java_based_implementation.api_impl import Catalog, Table
+from java_based_implementation.java_gateway import get_gateway
 from java_based_implementation.tests.utils import set_bridge_jar, create_simple_table
-from java_based_implementation.util import constants
+from java_based_implementation.util import constants, java_utils
 
 
 class TableWriteReadTest(unittest.TestCase):
@@ -33,12 +34,70 @@ class TableWriteReadTest(unittest.TestCase):
     def setUpClass(cls):
         classpath = set_bridge_jar()
         os.environ[constants.PYPAIMON_JAVA_CLASSPATH] = classpath
+        cls.warehouse = tempfile.mkdtemp()
+
+    def testReadEmptyAppendTable(self):
+        create_simple_table(self.warehouse, 'default', 'empty_append_table', False)
+        catalog = Catalog.create({'warehouse': self.warehouse})
+        table = catalog.get_table('default.empty_append_table')
+
+        # read data
+        read_builder = table.new_read_builder()
+        table_scan = read_builder.new_scan()
+        splits = table_scan.plan().splits()
+
+        self.assertTrue(len(splits) == 0)
+
+    def testReadEmptyPkTable(self):
+        create_simple_table(self.warehouse, 'default', 'empty_pk_table', True)
+        gateway = get_gateway()
+        j_catalog_context = java_utils.to_j_catalog_context({'warehouse': self.warehouse})
+        j_catalog = gateway.jvm.CatalogFactory.createCatalog(j_catalog_context)
+        j_identifier = gateway.jvm.Identifier.fromString('default.empty_pk_table')
+        j_table = j_catalog.getTable(j_identifier)
+        j_write_builder = gateway.jvm.InvocationUtil.getBatchWriteBuilder(j_table)
+
+        # first commit
+        generic_row = gateway.jvm.GenericRow(gateway.jvm.RowKind.INSERT, 2)
+        generic_row.setField(0, 1)
+        generic_row.setField(1, gateway.jvm.BinaryString.fromString('a'))
+        table_write = j_write_builder.newWrite()
+        table_write.write(generic_row)
+        table_commit = j_write_builder.newCommit()
+        table_commit.commit(table_write.prepareCommit())
+        table_write.close()
+        table_commit.close()
+
+        # second commit
+        generic_row = gateway.jvm.GenericRow(gateway.jvm.RowKind.DELETE, 2)
+        generic_row.setField(0, 1)
+        generic_row.setField(1, gateway.jvm.BinaryString.fromString('a'))
+        table_write = j_write_builder.newWrite()
+        table_write.write(generic_row)
+        table_commit = j_write_builder.newCommit()
+        table_commit.commit(table_write.prepareCommit())
+        table_write.close()
+        table_commit.close()
+
+        # read data
+        table = Table(j_table)
+        read_builder = table.new_read_builder()
+        table_scan = read_builder.new_scan()
+        table_read = read_builder.new_read()
+        splits = table_scan.plan().splits()
+
+        data_frames = [
+            batch.to_pandas()
+            for split in splits
+            for batch in table_read.create_reader(split)
+        ]
+        result = pd.concat(data_frames)
+        self.assertEqual(result.shape, (0, 0))
 
     def testWriteReadAppendTable(self):
-        warehouse = tempfile.mkdtemp()
-        create_simple_table(warehouse, 'default', 'simple_append_table', False)
+        create_simple_table(self.warehouse, 'default', 'simple_append_table', False)
 
-        catalog = Catalog.create({'warehouse': warehouse})
+        catalog = Catalog.create({'warehouse': self.warehouse})
         table = catalog.get_table('default.simple_append_table')
 
         # prepare data

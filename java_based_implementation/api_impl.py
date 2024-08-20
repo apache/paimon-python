@@ -124,7 +124,11 @@ class TableRead(table_read.TableRead):
         self._j_bytes_reader.setSplit(split.to_j_split())
         batch_iterator = self._batch_generator()
         # to init arrow schema
-        first_batch = next(batch_iterator)
+        try:
+            first_batch = next(batch_iterator)
+        except StopIteration:
+            return self._empty_batch_reader()
+
         batches = itertools.chain((b for b in [first_batch]), batch_iterator)
         return RecordBatchReader.from_batches(self._arrow_schema, batches)
 
@@ -138,6 +142,13 @@ class TableRead(table_read.TableRead):
                 if self._arrow_schema is None:
                     self._arrow_schema = stream_reader.schema
                 yield from stream_reader
+
+    def _empty_batch_reader(self):
+        import pyarrow as pa
+        schema = pa.schema([])
+        empty_batch = pa.RecordBatch.from_arrays([], schema=schema)
+        empty_reader = pa.RecordBatchReader.from_batches(schema, [empty_batch])
+        return empty_reader
 
     def close(self):
         self._j_bytes_reader.close()
