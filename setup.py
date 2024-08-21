@@ -18,13 +18,26 @@
 
 from setuptools import setup
 
-PACKAGES = ['paimon_python_api']
+PACKAGES = [
+    'paimon_python_api',
+    'java_based_implementation',
+    'java_based_implementation.util'
+]
+
+install_requires = [
+    'py4j==0.10.9.7',
+    'python-dateutil>=2.8.0,<3',
+    'pytz>=2018.3',
+    'numpy>=1.22.4',
+    'pandas>=1.3.0',
+    'pyarrow>=5.0.0'
+]
 
 setup(
     name='paimon_python',
     version='0.9.0.dev1',
     packages=PACKAGES,
-    install_requires=[],
+    install_requires=install_requires,
     description='Apache Paimon Python API',
     author='Apache Software Foundation',
     author_email='dev@paimon.apache.org',
