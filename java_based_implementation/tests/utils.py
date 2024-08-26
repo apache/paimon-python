@@ -45,7 +45,13 @@ def set_bridge_jar() -> str:
     return os.path.join(temp_dir, jar_name)
 
 
-def create_simple_table(warehouse, database, table_name, has_pk):
+def create_simple_table(warehouse, database, table_name, has_pk, options=None):
+    if options is None:
+        options = {
+            'bucket': '1',
+            'bucket-key': 'f0'
+        }
+
     gateway = get_gateway()
 
     j_catalog_context = to_j_catalog_context({'warehouse': warehouse})
@@ -55,8 +61,7 @@ def create_simple_table(warehouse, database, table_name, has_pk):
         gateway.jvm.Schema.newBuilder()
         .column('f0', gateway.jvm.DataTypes.INT())
         .column('f1', gateway.jvm.DataTypes.STRING())
-        .option('bucket', '1')
-        .option('bucket-key', 'f0')
+        .options(options)
     )
     if has_pk:
         j_schema_builder.primaryKey(['f0'])

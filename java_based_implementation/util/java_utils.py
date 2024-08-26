@@ -23,3 +23,11 @@ def to_j_catalog_context(catalog_context: dict):
     gateway = get_gateway()
     j_options = gateway.jvm.Options(catalog_context)
     return gateway.jvm.CatalogContext.create(j_options)
+
+
+def check_batch_rite(j_table):
+    gateway = get_gateway()
+    bucket_mode = j_table.bucketMode()
+    if bucket_mode == gateway.jvm.BucketMode.HASH_DYNAMIC \
+            or bucket_mode == gateway.jvm.BucketMode.CROSS_PARTITION:
+        raise TypeError("Doesn't support writing dynamic bucket or cross partition table.")
