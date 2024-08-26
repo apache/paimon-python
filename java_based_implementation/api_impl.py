@@ -19,7 +19,7 @@
 import itertools
 
 from java_based_implementation.java_gateway import get_gateway
-from java_based_implementation.util.java_utils import to_j_catalog_context, check_batch_rite
+from java_based_implementation.util.java_utils import to_j_catalog_context, check_batch_write
 from paimon_python_api import (catalog, table, read_builder, table_scan, split, table_read,
                                write_builder, table_write, commit_message, table_commit)
 from pyarrow import (RecordBatch, BufferOutputStream, RecordBatchStreamWriter,
@@ -56,7 +56,7 @@ class Table(table.Table):
         return ReadBuilder(j_read_builder, self._j_table.rowType())
 
     def new_batch_write_builder(self) -> 'BatchWriteBuilder':
-        check_batch_rite(self._j_table)
+        check_batch_write(self._j_table)
         j_batch_write_builder = get_gateway().jvm.InvocationUtil.getBatchWriteBuilder(self._j_table)
         return BatchWriteBuilder(j_batch_write_builder, self._j_table.rowType())
 

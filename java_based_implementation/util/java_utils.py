@@ -25,7 +25,7 @@ def to_j_catalog_context(catalog_context: dict):
     return gateway.jvm.CatalogContext.create(j_options)
 
 
-def check_batch_rite(j_table):
+def check_batch_write(j_table):
     gateway = get_gateway()
     bucket_mode = j_table.bucketMode()
     if bucket_mode == gateway.jvm.BucketMode.HASH_DYNAMIC \
