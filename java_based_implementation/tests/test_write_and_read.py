@@ -92,8 +92,7 @@ class TableWriteReadTest(unittest.TestCase):
             for split in splits
             for batch in table_read.create_reader(split)
         ]
-        result = pd.concat(data_frames)
-        self.assertEqual(result.shape, (0, 0))
+        self.assertEqual(len(data_frames), 0)
 
     def testWriteReadAppendTable(self):
         create_simple_table(self.warehouse, 'default', 'simple_append_table', False)
@@ -135,8 +134,8 @@ class TableWriteReadTest(unittest.TestCase):
         ]
         result = pd.concat(data_frames)
 
-        # check data
-        pd.testing.assert_frame_equal(result, df)
+        # check data (ignore index)
+        pd.testing.assert_frame_equal(result.reset_index(drop=True), df.reset_index(drop=True))
 
     def testWriteWrongSchema(self):
         create_simple_table(self.warehouse, 'default', 'test_wrong_schema', False)

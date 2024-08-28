@@ -47,13 +47,20 @@ public class BytesReader {
 
     public BytesReader(TableRead tableRead, RowType rowType) {
         this.tableRead = tableRead;
-        this.arrowFormatWriter = new ArrowFormatWriter(rowType, DEFAULT_WRITE_BATCH_SIZE);
+        this.arrowFormatWriter = new ArrowFormatWriter(rowType, DEFAULT_WRITE_BATCH_SIZE, true);
     }
 
     public void setSplit(Split split) throws IOException {
         RecordReader<InternalRow> recordReader = tableRead.createReader(split);
         iterator = new RecordReaderIterator<InternalRow>(recordReader);
         nextRow();
+    }
+
+    public byte[] serializeSchema() {
+        VectorSchemaRoot vsr = arrowFormatWriter.getVectorSchemaRoot();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ArrowUtils.serializeToIpc(vsr, out);
+        return out.toByteArray();
     }
 
     @Nullable
@@ -68,6 +75,7 @@ public class BytesReader {
             rowCount++;
         }
 
+        arrowFormatWriter.flush();
         VectorSchemaRoot vsr = arrowFormatWriter.getVectorSchemaRoot();
         vsr.setRowCount(rowCount);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
