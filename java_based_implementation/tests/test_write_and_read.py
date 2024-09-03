@@ -26,6 +26,7 @@ from java_based_implementation.api_impl import Catalog, Table
 from java_based_implementation.java_gateway import get_gateway
 from java_based_implementation.tests.utils import set_bridge_jar, create_simple_table
 from java_based_implementation.util import constants, java_utils
+from py4j.protocol import Py4JJavaError
 
 
 class TableWriteReadTest(unittest.TestCase):
@@ -136,3 +137,49 @@ class TableWriteReadTest(unittest.TestCase):
 
         # check data
         pd.testing.assert_frame_equal(result, df)
+
+    def testWriteWrongSchema(self):
+        create_simple_table(self.warehouse, 'default', 'test_wrong_schema', False)
+
+        catalog = Catalog.create({'warehouse': self.warehouse})
+        table = catalog.get_table('default.test_wrong_schema')
+
+        data = {
+            'f0': [1, 2, 3],
+            'f1': ['a', 'b', 'c'],
+        }
+        df = pd.DataFrame(data)
+        schema = pa.schema([
+            ('f0', pa.int64()),
+            ('f1', pa.string())
+        ])
+        record_batch = pa.RecordBatch.from_pandas(df, schema)
+
+        write_builder = table.new_batch_write_builder()
+        table_write = write_builder.new_write()
+
+        with self.assertRaises(Py4JJavaError) as e:
+            table_write.write(record_batch)
+        self.assertEqual(
+            str(e.exception.java_exception),
+            '''java.lang.RuntimeException: Input schema isn't consistent with table schema.
+\tTable schema is: [f0: Int(32, true), f1: Utf8]
+\tInput schema is: [f0: Int(64, true), f1: Utf8]''')
+
+    def testCannotWriteDynamicBucketTable(self):
+        create_simple_table(
+            self.warehouse,
+            'default',
+            'test_dynamic_bucket',
+            True,
+            {'bucket': '-1'}
+        )
+
+        catalog = Catalog.create({'warehouse': self.warehouse})
+        table = catalog.get_table('default.test_dynamic_bucket')
+
+        with self.assertRaises(TypeError) as e:
+            table.new_batch_write_builder()
+        self.assertEqual(
+            str(e.exception),
+            "Doesn't support writing dynamic bucket or cross partition table.")
