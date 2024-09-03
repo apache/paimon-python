@@ -16,8 +16,6 @@
 # limitations under the License.
 ################################################################################
 
-import itertools
-
 from java_based_implementation.java_gateway import get_gateway
 from java_based_implementation.util.java_utils import to_j_catalog_context, check_batch_write
 from paimon_python_api import (catalog, table, read_builder, table_scan, split, table_read,
@@ -123,15 +121,15 @@ class TableRead(table_read.TableRead):
 
     def create_reader(self, split: Split):
         self._j_bytes_reader.setSplit(split.to_j_split())
-        batch_iterator = self._batch_generator()
-        # to init arrow schema
-        try:
-            first_batch = next(batch_iterator)
-        except StopIteration:
-            return self._empty_batch_reader()
+        # get schema
+        if self._arrow_schema is None:
+            schema_bytes = self._j_bytes_reader.serializeSchema()
+            schema_reader = RecordBatchStreamReader(BufferReader(schema_bytes))
+            self._arrow_schema = schema_reader.schema
+            schema_reader.close()
 
-        batches = itertools.chain((b for b in [first_batch]), batch_iterator)
-        return RecordBatchReader.from_batches(self._arrow_schema, batches)
+        batch_iterator = self._batch_generator()
+        return RecordBatchReader.from_batches(self._arrow_schema, batch_iterator)
 
     def _batch_generator(self) -> Iterator[RecordBatch]:
         while True:
@@ -140,16 +138,7 @@ class TableRead(table_read.TableRead):
                 break
             else:
                 stream_reader = RecordBatchStreamReader(BufferReader(next_bytes))
-                if self._arrow_schema is None:
-                    self._arrow_schema = stream_reader.schema
                 yield from stream_reader
-
-    def _empty_batch_reader(self):
-        import pyarrow as pa
-        schema = pa.schema([])
-        empty_batch = pa.RecordBatch.from_arrays([], schema=schema)
-        empty_reader = pa.RecordBatchReader.from_batches(schema, [empty_batch])
-        return empty_reader
 
 
 class BatchWriteBuilder(write_builder.BatchWriteBuilder):
