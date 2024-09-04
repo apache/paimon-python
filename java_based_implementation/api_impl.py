@@ -16,7 +16,10 @@
 # limitations under the License.
 ################################################################################
 
+import os
+
 from java_based_implementation.java_gateway import get_gateway
+from java_based_implementation.util import constants
 from java_based_implementation.util.java_utils import to_j_catalog_context, check_batch_write
 from paimon_python_api import (catalog, table, read_builder, table_scan, split, table_read,
                                write_builder, table_write, commit_message, table_commit)
@@ -27,31 +30,33 @@ from typing import List, Iterator
 
 class Catalog(catalog.Catalog):
 
-    def __init__(self, j_catalog):
+    def __init__(self, j_catalog, catalog_options: dict):
         self._j_catalog = j_catalog
+        self._catalog_options = catalog_options
 
     @staticmethod
-    def create(catalog_context: dict) -> 'Catalog':
-        j_catalog_context = to_j_catalog_context(catalog_context)
+    def create(catalog_options: dict) -> 'Catalog':
+        j_catalog_context = to_j_catalog_context(catalog_options)
         gateway = get_gateway()
         j_catalog = gateway.jvm.CatalogFactory.createCatalog(j_catalog_context)
-        return Catalog(j_catalog)
+        return Catalog(j_catalog, catalog_options)
 
     def get_table(self, identifier: str) -> 'Table':
         gateway = get_gateway()
         j_identifier = gateway.jvm.Identifier.fromString(identifier)
         j_table = self._j_catalog.getTable(j_identifier)
-        return Table(j_table)
+        return Table(j_table, self._catalog_options)
 
 
 class Table(table.Table):
 
-    def __init__(self, j_table):
+    def __init__(self, j_table, catalog_options: dict):
         self._j_table = j_table
+        self._catalog_options = catalog_options
 
     def new_read_builder(self) -> 'ReadBuilder':
         j_read_builder = get_gateway().jvm.InvocationUtil.getReadBuilder(self._j_table)
-        return ReadBuilder(j_read_builder, self._j_table.rowType())
+        return ReadBuilder(j_read_builder, self._j_table.rowType(), self._catalog_options)
 
     def new_batch_write_builder(self) -> 'BatchWriteBuilder':
         check_batch_write(self._j_table)
@@ -61,9 +66,10 @@ class Table(table.Table):
 
 class ReadBuilder(read_builder.ReadBuilder):
 
-    def __init__(self, j_read_builder, j_row_type):
+    def __init__(self, j_read_builder, j_row_type, catalog_options: dict):
         self._j_read_builder = j_read_builder
         self._j_row_type = j_row_type
+        self._catalog_options = catalog_options
 
     def with_projection(self, projection: List[List[int]]) -> 'ReadBuilder':
         self._j_read_builder.withProjection(projection)
@@ -79,7 +85,7 @@ class ReadBuilder(read_builder.ReadBuilder):
 
     def new_read(self) -> 'TableRead':
         j_table_read = self._j_read_builder.newRead()
-        return TableRead(j_table_read, self._j_row_type)
+        return TableRead(j_table_read, self._j_row_type, self._catalog_options)
 
 
 class TableScan(table_scan.TableScan):
@@ -113,12 +119,13 @@ class Split(split.Split):
 
 class TableRead(table_read.TableRead):
 
-    def __init__(self, j_table_read, j_row_type):
+    def __init__(self, j_table_read, j_row_type, catalog_options):
         self._j_table_read = j_table_read
         self._j_row_type = j_row_type
         self._j_single_split_bytes_reader = None
         self._j_parallel_bytes_reader = None
         self._arrow_schema = None
+        self._catalog_options = catalog_options
 
     def create_reader(self, split: Split):
         self._init(False)
@@ -132,13 +139,23 @@ class TableRead(table_read.TableRead):
         return self._get_arrow_reader(self._j_parallel_bytes_reader)
 
     def _init(self, parallel):
+        jvm = get_gateway().jvm
         if parallel and self._j_parallel_bytes_reader is None:
-            self._j_parallel_bytes_reader = get_gateway().jvm.InvocationUtil.createBytesReader(
-                self._j_table_read, self._j_row_type, parallel)
+            # get thread num
+            max_workers = self._catalog_options.get(constants.MAX_WORKERS)
+            if max_workers is None:
+                # see builtin thread.ThreadPoolExecutor
+                max_workers = min(32, (os.cpu_count() or 1) + 4)
+            else:
+                max_workers = int(max_workers)
+            if max_workers <= 0:
+                raise ValueError("max_workers must be greater than 0")
+            self._j_parallel_bytes_reader = jvm.InvocationUtil.createParallelBytesReader(
+                self._j_table_read, self._j_row_type, max_workers)
             self._load_schema(self._j_parallel_bytes_reader)
         if not parallel and self._j_single_split_bytes_reader is None:
-            self._j_single_split_bytes_reader = get_gateway().jvm.InvocationUtil.createBytesReader(
-                self._j_table_read, self._j_row_type, parallel)
+            self._j_single_split_bytes_reader = jvm.InvocationUtil.createSingleSplitBytesReader(
+                self._j_table_read, self._j_row_type)
             self._load_schema(self._j_single_split_bytes_reader)
 
     def _load_schema(self, j_bytes_reader):

@@ -48,21 +48,30 @@ import java.util.function.Function;
 /** Parallely read Arrow bytes from multiple splits. */
 public class ParallelBytesReader extends AbstractBytesReader {
 
-    private static final ThreadPoolExecutor EXECUTOR =
-            ThreadPoolUtils.createCachedThreadPool(
-                    Runtime.getRuntime().availableProcessors(), "PARALLEL_SPLITS_READER");
+    private static final String THREAD_NAME_PREFIX = "PARALLEL_SPLITS_READER";
 
     private final ConcurrentLinkedQueue<RecordReaderIterator<InternalRow>> iterators;
     private final ConcurrentLinkedQueue<ArrowFormatWriter> arrowFormatWriters;
+    private final int threadNum;
 
-    public ParallelBytesReader(TableRead tableRead, RowType rowType) {
+    private ThreadPoolExecutor executor;
+
+    public ParallelBytesReader(TableRead tableRead, RowType rowType, int threadNum) {
         super(tableRead, rowType);
         this.iterators = new ConcurrentLinkedQueue<>();
         this.arrowFormatWriters = new ConcurrentLinkedQueue<>();
+        this.threadNum = threadNum;
     }
 
     public void setSplits(List<Split> splits) {
-        bytesIterator = randomlyExecute(EXECUTOR, makeProcessor(), splits);
+        bytesIterator = randomlyExecute(getExecutor(), makeProcessor(), splits);
+    }
+
+    private ThreadPoolExecutor getExecutor() {
+        if (executor == null) {
+            executor = ThreadPoolUtils.createCachedThreadPool(threadNum, THREAD_NAME_PREFIX);
+        }
+        return executor;
     }
 
     @Override

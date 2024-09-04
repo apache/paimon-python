@@ -39,11 +39,14 @@ public class InvocationUtil {
         return table.newReadBuilder();
     }
 
-    public static AbstractBytesReader createBytesReader(
-            TableRead tableRead, RowType rowType, boolean parallel) {
-        return parallel
-                ? new ParallelBytesReader(tableRead, rowType)
-                : new SingleSplitBytesReader(tableRead, rowType);
+    public static SingleSplitBytesReader createSingleSplitBytesReader(
+            TableRead tableRead, RowType rowType) {
+        return new SingleSplitBytesReader(tableRead, rowType);
+    }
+
+    public static ParallelBytesReader createParallelBytesReader(
+            TableRead tableRead, RowType rowType, int threadNum) {
+        return new ParallelBytesReader(tableRead, rowType, threadNum);
     }
 
     public static BytesWriter createBytesWriter(TableWrite tableWrite, RowType rowType) {

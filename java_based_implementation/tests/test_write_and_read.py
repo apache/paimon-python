@@ -83,7 +83,7 @@ class TableWriteReadTest(unittest.TestCase):
         table_commit.close()
 
         # read data
-        table = Table(j_table)
+        table = Table(j_table, {})
         read_builder = table.new_read_builder()
         table_scan = read_builder.new_scan()
         table_read = read_builder.new_read()
@@ -188,7 +188,7 @@ class TableWriteReadTest(unittest.TestCase):
     def testParallelRead(self):
         create_simple_table(self.warehouse, 'default', 'test_parallel_read', False)
 
-        catalog = Catalog.create({'warehouse': self.warehouse})
+        catalog = Catalog.create({'warehouse': self.warehouse, 'max-workers': '2'})
         table = catalog.get_table('default.test_parallel_read')
 
         # prepare data

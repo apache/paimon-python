@@ -19,9 +19,9 @@
 from java_based_implementation.java_gateway import get_gateway
 
 
-def to_j_catalog_context(catalog_context: dict):
+def to_j_catalog_context(catalog_options: dict):
     gateway = get_gateway()
-    j_options = gateway.jvm.Options(catalog_context)
+    j_options = gateway.jvm.Options(catalog_options)
     return gateway.jvm.CatalogContext.create(j_options)
 
 
