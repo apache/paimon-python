@@ -144,8 +144,8 @@ class TableRead(table_read.TableRead):
             # get thread num
             max_workers = self._catalog_options.get(constants.MAX_WORKERS)
             if max_workers is None:
-                # see builtin thread.ThreadPoolExecutor
-                max_workers = min(32, (os.cpu_count() or 1) + 4)
+                # default is sequential
+                max_workers = 1
             else:
                 max_workers = int(max_workers)
             if max_workers <= 0:
