@@ -184,3 +184,55 @@ class TableWriteReadTest(unittest.TestCase):
         self.assertEqual(
             str(e.exception),
             "Doesn't support writing dynamic bucket or cross partition table.")
+
+    def testParallelRead(self):
+        create_simple_table(self.warehouse, 'default', 'test_parallel_read', False)
+
+        catalog = Catalog.create({'warehouse': self.warehouse})
+        table = catalog.get_table('default.test_parallel_read')
+
+        # prepare data
+        n_times = 4
+        expected_data = {
+            'f0': [],
+            'f1': []
+        }
+        for i in range(n_times):
+            data = {
+                'f0': [i],
+                'f1': [str(i * 2)]
+            }
+            expected_data['f0'].append(i)
+            expected_data['f1'].append(str(i * 2))
+
+            df = pd.DataFrame(data)
+            df['f0'] = df['f0'].astype('int32')
+            record_batch = pa.RecordBatch.from_pandas(df)
+
+            # write and commit data
+            write_builder = table.new_batch_write_builder()
+            table_write = write_builder.new_write()
+            table_commit = write_builder.new_commit()
+
+            table_write.write(record_batch)
+            commit_messages = table_write.prepare_commit()
+            table_commit.commit(commit_messages)
+
+        # read data parallely
+        read_builder = table.new_read_builder()
+        table_scan = read_builder.new_scan()
+        table_read = read_builder.new_read()
+        splits = table_scan.plan().splits()
+
+        data_frames = [
+            batch.to_pandas()
+            for batch in table_read.create_parallel_reader(splits)
+        ]
+        result = pd.concat(data_frames)
+
+        expected_df = pd.DataFrame(expected_data)
+        expected_df['f0'] = expected_df['f0'].astype('int32')
+
+        # check data (ignore index)
+        pd.testing.assert_frame_equal(
+            result.reset_index(drop=True), expected_df.reset_index(drop=True))

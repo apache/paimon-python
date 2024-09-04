@@ -21,54 +21,33 @@ package org.apache.paimon.python;
 import org.apache.paimon.arrow.ArrowUtils;
 import org.apache.paimon.arrow.vector.ArrowFormatWriter;
 import org.apache.paimon.data.InternalRow;
-import org.apache.paimon.reader.RecordReader;
 import org.apache.paimon.reader.RecordReaderIterator;
-import org.apache.paimon.table.source.Split;
-import org.apache.paimon.table.source.TableRead;
-import org.apache.paimon.types.RowType;
 
 import org.apache.arrow.vector.VectorSchemaRoot;
 
-import javax.annotation.Nullable;
-
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.util.Iterator;
 
-/** Read Arrow bytes from split. */
-public class BytesReader {
+/** Cast a {@link RecordReaderIterator} to bytes iterator. */
+public class RecordBytesIterator implements Iterator<byte[]> {
 
-    private static final int DEFAULT_WRITE_BATCH_SIZE = 2048;
-
-    private final TableRead tableRead;
+    private final RecordReaderIterator<InternalRow> iterator;
     private final ArrowFormatWriter arrowFormatWriter;
 
-    private RecordReaderIterator<InternalRow> iterator;
     private InternalRow nextRow;
 
-    public BytesReader(TableRead tableRead, RowType rowType) {
-        this.tableRead = tableRead;
-        this.arrowFormatWriter = new ArrowFormatWriter(rowType, DEFAULT_WRITE_BATCH_SIZE, true);
-    }
-
-    public void setSplit(Split split) throws IOException {
-        RecordReader<InternalRow> recordReader = tableRead.createReader(split);
-        iterator = new RecordReaderIterator<InternalRow>(recordReader);
+    public RecordBytesIterator(
+            RecordReaderIterator<InternalRow> iterator, ArrowFormatWriter arrowFormatWriter) {
+        this.iterator = iterator;
+        this.arrowFormatWriter = arrowFormatWriter;
         nextRow();
     }
 
-    public byte[] serializeSchema() {
-        VectorSchemaRoot vsr = arrowFormatWriter.getVectorSchemaRoot();
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ArrowUtils.serializeToIpc(vsr, out);
-        return out.toByteArray();
+    public boolean hasNext() {
+        return nextRow != null;
     }
 
-    @Nullable
-    public byte[] next() throws Exception {
-        if (nextRow == null) {
-            return null;
-        }
-
+    public byte[] next() {
         int rowCount = 0;
         while (nextRow != null && arrowFormatWriter.write(nextRow)) {
             nextRow();
@@ -80,11 +59,6 @@ public class BytesReader {
         vsr.setRowCount(rowCount);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ArrowUtils.serializeToIpc(vsr, out);
-        if (nextRow == null) {
-            // close resource
-            arrowFormatWriter.close();
-            iterator.close();
-        }
         return out.toByteArray();
     }
 

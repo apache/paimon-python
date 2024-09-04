@@ -115,25 +115,46 @@ class TableRead(table_read.TableRead):
 
     def __init__(self, j_table_read, j_row_type):
         self._j_table_read = j_table_read
-        self._j_bytes_reader = get_gateway().jvm.InvocationUtil.createBytesReader(
-            j_table_read, j_row_type)
+        self._j_row_type = j_row_type
+        self._j_single_split_bytes_reader = None
+        self._j_parallel_bytes_reader = None
         self._arrow_schema = None
 
     def create_reader(self, split: Split):
-        self._j_bytes_reader.setSplit(split.to_j_split())
-        # get schema
+        self._init(False)
+        self._j_single_split_bytes_reader.setSplit(split.to_j_split())
+        return self._get_arrow_reader(self._j_single_split_bytes_reader)
+
+    def create_parallel_reader(self, splits):
+        self._init(True)
+        j_splits = list(map(lambda s: s.to_j_split(), splits))
+        self._j_parallel_bytes_reader.setSplits(j_splits)
+        return self._get_arrow_reader(self._j_parallel_bytes_reader)
+
+    def _init(self, parallel):
+        if parallel and self._j_parallel_bytes_reader is None:
+            self._j_parallel_bytes_reader = get_gateway().jvm.InvocationUtil.createBytesReader(
+                self._j_table_read, self._j_row_type, parallel)
+            self._load_schema(self._j_parallel_bytes_reader)
+        if not parallel and self._j_single_split_bytes_reader is None:
+            self._j_single_split_bytes_reader = get_gateway().jvm.InvocationUtil.createBytesReader(
+                self._j_table_read, self._j_row_type, parallel)
+            self._load_schema(self._j_single_split_bytes_reader)
+
+    def _load_schema(self, j_bytes_reader):
         if self._arrow_schema is None:
-            schema_bytes = self._j_bytes_reader.serializeSchema()
+            schema_bytes = j_bytes_reader.serializeSchema()
             schema_reader = RecordBatchStreamReader(BufferReader(schema_bytes))
             self._arrow_schema = schema_reader.schema
             schema_reader.close()
 
-        batch_iterator = self._batch_generator()
+    def _get_arrow_reader(self, j_byte_reader):
+        batch_iterator = self._batch_generator(j_byte_reader)
         return RecordBatchReader.from_batches(self._arrow_schema, batch_iterator)
 
-    def _batch_generator(self) -> Iterator[RecordBatch]:
+    def _batch_generator(self, j_bytes_reader) -> Iterator[RecordBatch]:
         while True:
-            next_bytes = self._j_bytes_reader.next()
+            next_bytes = j_bytes_reader.next()
             if next_bytes is None:
                 break
             else:

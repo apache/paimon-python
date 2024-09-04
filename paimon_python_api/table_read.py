@@ -19,6 +19,7 @@
 from abc import ABC, abstractmethod
 from pyarrow import RecordBatchReader
 from paimon_python_api.split import Split
+from typing import List
 
 
 class TableRead(ABC):
@@ -27,3 +28,7 @@ class TableRead(ABC):
     @abstractmethod
     def create_reader(self, split: Split) -> RecordBatchReader:
         """Return a reader containing batches of pyarrow format."""
+
+    @abstractmethod
+    def create_parallel_reader(self, splits: List[Split]) -> RecordBatchReader:
+        """Parallely read splits and return the RecordBatchReader."""
