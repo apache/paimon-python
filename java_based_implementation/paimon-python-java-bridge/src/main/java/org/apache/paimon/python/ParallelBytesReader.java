@@ -18,6 +18,7 @@
 
 package org.apache.paimon.python;
 
+import org.apache.paimon.arrow.ArrowUtils;
 import org.apache.paimon.arrow.vector.ArrowFormatWriter;
 import org.apache.paimon.data.InternalRow;
 import org.apache.paimon.reader.RecordReader;
@@ -31,6 +32,9 @@ import org.apache.paimon.shade.guava30.com.google.common.collect.Iterators;
 
 import org.apache.arrow.vector.VectorSchemaRoot;
 
+import javax.annotation.Nullable;
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -46,25 +50,50 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Function;
 
 /** Parallely read Arrow bytes from multiple splits. */
-public class ParallelBytesReader extends AbstractBytesReader {
+public class ParallelBytesReader {
 
     private static final String THREAD_NAME_PREFIX = "PARALLEL_SPLITS_READER";
+    private static final int DEFAULT_WRITE_BATCH_SIZE = 2048;
+
+    private final TableRead tableRead;
+    private final RowType rowType;
+    private final int threadNum;
 
     private final ConcurrentLinkedQueue<RecordReaderIterator<InternalRow>> iterators;
     private final ConcurrentLinkedQueue<ArrowFormatWriter> arrowFormatWriters;
-    private final int threadNum;
 
     private ThreadPoolExecutor executor;
+    private Iterator<byte[]> bytesIterator;
 
     public ParallelBytesReader(TableRead tableRead, RowType rowType, int threadNum) {
-        super(tableRead, rowType);
+        this.tableRead = tableRead;
+        this.rowType = rowType;
+        this.threadNum = threadNum;
         this.iterators = new ConcurrentLinkedQueue<>();
         this.arrowFormatWriters = new ConcurrentLinkedQueue<>();
-        this.threadNum = threadNum;
     }
 
     public void setSplits(List<Split> splits) {
         bytesIterator = randomlyExecute(getExecutor(), makeProcessor(), splits);
+    }
+
+    public byte[] serializeSchema() {
+        ArrowFormatWriter arrowFormatWriter = newWriter();
+        VectorSchemaRoot vsr = arrowFormatWriter.getVectorSchemaRoot();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ArrowUtils.serializeToIpc(vsr, out);
+        arrowFormatWriter.close();
+        return out.toByteArray();
+    }
+
+    @Nullable
+    public byte[] next() {
+        if (bytesIterator.hasNext()) {
+            return bytesIterator.next();
+        } else {
+            closeResources();
+            return null;
+        }
     }
 
     private ThreadPoolExecutor getExecutor() {
@@ -72,31 +101,6 @@ public class ParallelBytesReader extends AbstractBytesReader {
             executor = ThreadPoolUtils.createCachedThreadPool(threadNum, THREAD_NAME_PREFIX);
         }
         return executor;
-    }
-
-    @Override
-    protected VectorSchemaRoot getEmptyVsr() {
-        ArrowFormatWriter arrowFormatWriter = newWriter();
-        VectorSchemaRoot vsr = arrowFormatWriter.getVectorSchemaRoot();
-        arrowFormatWriter.close();
-        return vsr;
-    }
-
-    @Override
-    public void closeResources() {
-        for (RecordReaderIterator<InternalRow> iterator : iterators) {
-            try {
-                iterator.close();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        iterators.clear();
-
-        for (ArrowFormatWriter arrowFormatWriter : arrowFormatWriters) {
-            arrowFormatWriter.close();
-        }
-        arrowFormatWriters.clear();
     }
 
     private Function<Split, Iterator<byte[]>> makeProcessor() {
@@ -143,5 +147,25 @@ public class ParallelBytesReader extends AbstractBytesReader {
                         }
                     }
                 });
+    }
+
+    private void closeResources() {
+        for (RecordReaderIterator<InternalRow> iterator : iterators) {
+            try {
+                iterator.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        iterators.clear();
+
+        for (ArrowFormatWriter arrowFormatWriter : arrowFormatWriters) {
+            arrowFormatWriter.close();
+        }
+        arrowFormatWriters.clear();
+    }
+
+    private ArrowFormatWriter newWriter() {
+        return new ArrowFormatWriter(rowType, DEFAULT_WRITE_BATCH_SIZE, true);
     }
 }

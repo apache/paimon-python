@@ -16,8 +16,6 @@
 # limitations under the License.
 ################################################################################
 
-import os
-
 from java_based_implementation.java_gateway import get_gateway
 from java_based_implementation.util import constants
 from java_based_implementation.util.java_utils import to_j_catalog_context, check_batch_write
@@ -122,25 +120,22 @@ class TableRead(table_read.TableRead):
     def __init__(self, j_table_read, j_row_type, catalog_options):
         self._j_table_read = j_table_read
         self._j_row_type = j_row_type
-        self._j_single_split_bytes_reader = None
-        self._j_parallel_bytes_reader = None
-        self._arrow_schema = None
         self._catalog_options = catalog_options
+        self._j_bytes_reader = None
+        self._arrow_schema = None
 
-    def create_reader(self, split: Split):
-        self._init(False)
-        self._j_single_split_bytes_reader.setSplit(split.to_j_split())
-        return self._get_arrow_reader(self._j_single_split_bytes_reader)
-
-    def create_parallel_reader(self, splits):
-        self._init(True)
+    def create_reader(self, splits):
+        self._init()
         j_splits = list(map(lambda s: s.to_j_split(), splits))
-        self._j_parallel_bytes_reader.setSplits(j_splits)
-        return self._get_arrow_reader(self._j_parallel_bytes_reader)
+        self._j_bytes_reader.setSplits(j_splits)
+        batch_iterator = self._batch_generator()
+        return RecordBatchReader.from_batches(self._arrow_schema, batch_iterator)
 
-    def _init(self, parallel):
-        jvm = get_gateway().jvm
-        if parallel and self._j_parallel_bytes_reader is None:
+    def create_reader_from_split(self, split: Split):
+        return self.create_reader([split])
+
+    def _init(self):
+        if self._j_bytes_reader is None:
             # get thread num
             max_workers = self._catalog_options.get(constants.MAX_WORKERS)
             if max_workers is None:
@@ -150,28 +145,18 @@ class TableRead(table_read.TableRead):
                 max_workers = int(max_workers)
             if max_workers <= 0:
                 raise ValueError("max_workers must be greater than 0")
-            self._j_parallel_bytes_reader = jvm.InvocationUtil.createParallelBytesReader(
+            self._j_bytes_reader = get_gateway().jvm.InvocationUtil.createParallelBytesReader(
                 self._j_table_read, self._j_row_type, max_workers)
-            self._load_schema(self._j_parallel_bytes_reader)
-        if not parallel and self._j_single_split_bytes_reader is None:
-            self._j_single_split_bytes_reader = jvm.InvocationUtil.createSingleSplitBytesReader(
-                self._j_table_read, self._j_row_type)
-            self._load_schema(self._j_single_split_bytes_reader)
 
-    def _load_schema(self, j_bytes_reader):
         if self._arrow_schema is None:
-            schema_bytes = j_bytes_reader.serializeSchema()
+            schema_bytes = self._j_bytes_reader.serializeSchema()
             schema_reader = RecordBatchStreamReader(BufferReader(schema_bytes))
             self._arrow_schema = schema_reader.schema
             schema_reader.close()
 
-    def _get_arrow_reader(self, j_byte_reader):
-        batch_iterator = self._batch_generator(j_byte_reader)
-        return RecordBatchReader.from_batches(self._arrow_schema, batch_iterator)
-
-    def _batch_generator(self, j_bytes_reader) -> Iterator[RecordBatch]:
+    def _batch_generator(self) -> Iterator[RecordBatch]:
         while True:
-            next_bytes = j_bytes_reader.next()
+            next_bytes = self._j_bytes_reader.next()
             if next_bytes is None:
                 break
             else:
