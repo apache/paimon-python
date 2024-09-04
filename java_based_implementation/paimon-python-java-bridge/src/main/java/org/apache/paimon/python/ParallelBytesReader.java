@@ -53,7 +53,7 @@ import java.util.function.Function;
 public class ParallelBytesReader {
 
     private static final String THREAD_NAME_PREFIX = "PARALLEL_SPLITS_READER";
-    private static final int DEFAULT_WRITE_BATCH_SIZE = 2048;
+    private static final int DEFAULT_WRITE_BATCH_SIZE = 1024;
 
     private final TableRead tableRead;
     private final RowType rowType;
