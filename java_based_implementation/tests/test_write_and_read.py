@@ -92,7 +92,7 @@ class TableWriteReadTest(unittest.TestCase):
         data_frames = [
             batch.to_pandas()
             for split in splits
-            for batch in table_read.create_reader_from_split(split)
+            for batch in table_read.create_reader([split])
         ]
         self.assertEqual(len(data_frames), 0)
 
@@ -132,7 +132,7 @@ class TableWriteReadTest(unittest.TestCase):
         data_frames = [
             batch.to_pandas()
             for split in splits
-            for batch in table_read.create_reader_from_split(split)
+            for batch in table_read.create_reader([split])
         ]
         result = pd.concat(data_frames)
 

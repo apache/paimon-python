@@ -19,7 +19,6 @@
 from abc import ABC, abstractmethod
 from pyarrow import RecordBatchReader
 from paimon_python_api.split import Split
-from paimon_python_api.table_scan import Plan
 from typing import List
 
 
@@ -29,11 +28,3 @@ class TableRead(ABC):
     @abstractmethod
     def create_reader(self, splits: List[Split]) -> RecordBatchReader:
         """Return a reader containing batches of pyarrow format."""
-
-    @abstractmethod
-    def create_reader_from_split(self, split: Split) -> RecordBatchReader:
-        """Reader that only read one split."""
-
-    def create_reader_from_plan(self, plan: Plan) -> RecordBatchReader:
-        """Reader that read plan."""
-        return self.create_reader(plan.splits())

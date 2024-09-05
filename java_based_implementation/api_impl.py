@@ -131,9 +131,6 @@ class TableRead(table_read.TableRead):
         batch_iterator = self._batch_generator()
         return RecordBatchReader.from_batches(self._arrow_schema, batch_iterator)
 
-    def create_reader_from_split(self, split: Split):
-        return self.create_reader([split])
-
     def _init(self):
         if self._j_bytes_reader is None:
             # get thread num
