@@ -28,14 +28,6 @@ and running "External Tools" → "flake8".
 
 We can use `py4j` to leverage Java code to read Paimon data. This section describes how to use this implementation.
 
-### Build paimon-python-java-bridge
-
-```bash
-cd java_based_implementation/paimon-python-java-bridge/
-mvn clean install -DskipTests
-```
-The built target is java-based-implementation/paimon-python-java-bridge/target/paimon-python-java-bridge-<version>.jar
-
 ### Set Environment Variables
 
 `py4j` need to access a JVM, so we should set JVM arguments (optional) and Java classpath. A convenient way is using
@@ -44,9 +36,13 @@ The built target is java-based-implementation/paimon-python-java-bridge/target/p
 ```python
 import os
 
-os.environ['PYPAIMON_JAVA_CLASSPATH'] = '/path/to/paimon-python-java-bridge-<version>.jar'
+os.environ['PYPAIMON_JAVA_CLASSPATH'] = '/path/to/dependent_jars/*'
 os.environ['_PYPAIMON_JVM_ARGS'] = 'jvm_arg1 jvm_arg2 ...'
 ```
+
+NOTE: the package has set paimon core and hadoop dependencies. If you just test in local or run code in hadoop, you doesn't
+need to set classpath. If you need other dependencies such as OSS/S3 filesystem jars, or special catalog which isn't implemented 
+in paimon core, please download jars and set classpath.
 
 # API Reference
 TODO
