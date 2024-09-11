@@ -578,6 +578,9 @@ function tox_check() {
     # Ensure the permission of the scripts set correctly
     chmod +x $PAIMON_PYTHON_DIR/dev/*
 
+    # tox runs codes in virtual env, set var to avoid error
+    export _PYPAIMON_TOX_TEST="true"
+
     if [[ ${BUILD_REASON} = 'IndividualCI' ]]; then
         # Only run test in latest python version triggered by a Git push
         $TOX_PATH -vv -c $PAIMON_PYTHON_DIR/tox.ini -e ${LATEST_PYTHON} --recreate 2>&1 | tee -a $LOG_FILE

@@ -16,7 +16,6 @@
 # limitations under the License.
 ################################################################################
 
-import os
 import tempfile
 import unittest
 import pandas as pd
@@ -24,8 +23,8 @@ import pyarrow as pa
 
 from java_based_implementation.api_impl import Catalog, Table
 from java_based_implementation.java_gateway import get_gateway
-from java_based_implementation.tests.utils import set_bridge_jar, create_simple_table
-from java_based_implementation.util import constants, java_utils
+from java_based_implementation.tests.utils import create_simple_table
+from java_based_implementation.util import java_utils, setup_utils
 from py4j.protocol import Py4JJavaError
 
 
@@ -33,9 +32,12 @@ class TableWriteReadTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        classpath = set_bridge_jar()
-        os.environ[constants.PYPAIMON_JAVA_CLASSPATH] = classpath
+        setup_utils.setup_java_bridge()
         cls.warehouse = tempfile.mkdtemp()
+
+    @classmethod
+    def tearDownClass(cls):
+        setup_utils.clean()
 
     def testReadEmptyAppendTable(self):
         create_simple_table(self.warehouse, 'default', 'empty_append_table', False)

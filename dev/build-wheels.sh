@@ -33,7 +33,7 @@ for ((i=0;i<${#py_env[@]};i++)) do
         # force the linker to use the older glibc version in Linux
         export CFLAGS="-I. -include dev/glibc_version_fix.h"
     fi
-    ${PY_ENV_DIR}/${py_env[i]}/bin/python setup.py bdist_wheel
+    ${PY_ENV_DIR}/${py_env[i]}/bin/python setup.py clean bdist_wheel
 done
 
 ## 4. convert linux_x86_64 wheel to manylinux1 wheel in Linux
