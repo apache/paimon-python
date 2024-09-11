@@ -39,8 +39,9 @@ public class InvocationUtil {
         return table.newReadBuilder();
     }
 
-    public static BytesReader createBytesReader(TableRead tableRead, RowType rowType) {
-        return new BytesReader(tableRead, rowType);
+    public static ParallelBytesReader createParallelBytesReader(
+            TableRead tableRead, RowType rowType, int threadNum) {
+        return new ParallelBytesReader(tableRead, rowType, threadNum);
     }
 
     public static BytesWriter createBytesWriter(TableWrite tableWrite, RowType rowType) {

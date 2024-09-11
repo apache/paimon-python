@@ -23,3 +23,6 @@ PYPAIMON_JAVA_CLASSPATH = '_PYPAIMON_JAVA_CLASSPATH'
 PYPAIMON_MAIN_CLASS = 'org.apache.paimon.python.PythonGatewayServer'
 PYPAIMON_MAIN_ARGS = '_PYPAIMON_MAIN_ARGS'
 PYPAIMON_TOX_TEST = '_PYPAIMON_TOX_TEST'
+
+# ------------------------ for catalog options ------------------------
+MAX_WORKERS = "max-workers"

@@ -28,7 +28,7 @@ class Catalog(ABC):
 
     @staticmethod
     @abstractmethod
-    def create(catalog_context: dict) -> 'Catalog':
+    def create(catalog_options: dict) -> 'Catalog':
         """Create catalog from configuration."""
 
     @abstractmethod
