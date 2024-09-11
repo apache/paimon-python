@@ -21,8 +21,9 @@ import platform
 import signal
 
 from subprocess import Popen, PIPE
-from java_based_implementation.util.constants import (PYPAIMON_JVM_ARGS, PYPAIMON_JAVA_CLASSPATH,
-                                                      PYPAIMON_MAIN_ARGS, PYPAIMON_MAIN_CLASS)
+from java_based_implementation.util.constants import (PYPAIMON_JVM_ARGS, PYPAIMON_MAIN_ARGS,
+                                                      PYPAIMON_MAIN_CLASS)
+from java_based_implementation.util.setup_utils import get_classpath
 
 
 def on_windows():
@@ -47,7 +48,7 @@ def launch_gateway_server_process(env):
     # TODO construct Java module log settings
     log_settings = []
     jvm_args = env.get(PYPAIMON_JVM_ARGS, '').split()
-    classpath = env.get(PYPAIMON_JAVA_CLASSPATH)
+    classpath = get_classpath(env)
     main_args = env.get(PYPAIMON_MAIN_ARGS, '').split()
     command = [
         java_executable,

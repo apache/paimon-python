@@ -16,33 +16,8 @@
 # limitations under the License.
 ################################################################################
 
-import os
-import shutil
-import subprocess
-import tempfile
-
 from java_based_implementation.java_gateway import get_gateway
 from java_based_implementation.util.java_utils import to_j_catalog_context
-
-
-def set_bridge_jar() -> str:
-    current_file_path = os.path.abspath(__file__)
-    current_dir = os.path.dirname(current_file_path)
-    parent_dir = os.path.dirname(current_dir)
-    java_module = os.path.join(parent_dir, 'paimon-python-java-bridge')
-    # build paimon-python-java-bridge
-    subprocess.run(
-        ["mvn", "clean", "package"],
-        cwd=java_module,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-    jar_name = 'paimon-python-java-bridge-0.9-SNAPSHOT.jar'
-    jar_file = os.path.join(java_module, 'target', jar_name)
-    # move to temp dir
-    temp_dir = tempfile.mkdtemp()
-    shutil.move(jar_file, temp_dir)
-    return os.path.join(temp_dir, jar_name)
 
 
 def create_simple_table(warehouse, database, table_name, has_pk, options=None):
