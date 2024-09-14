@@ -16,18 +16,12 @@
 # limitations under the License.
 ################################################################################
 
-from java_based_implementation.java_gateway import get_gateway
+# ---------------------------- for env var ----------------------------
+PYPAIMON_CONN_INFO_PATH = '_PYPAIMON_CONN_INFO_PATH'
+PYPAIMON_JVM_ARGS = '_PYPAIMON_JVM_ARGS'
+PYPAIMON_JAVA_CLASSPATH = '_PYPAIMON_JAVA_CLASSPATH'
+PYPAIMON_MAIN_CLASS = 'org.apache.paimon.python.PythonGatewayServer'
+PYPAIMON_MAIN_ARGS = '_PYPAIMON_MAIN_ARGS'
 
-
-def to_j_catalog_context(catalog_options: dict):
-    gateway = get_gateway()
-    j_options = gateway.jvm.Options(catalog_options)
-    return gateway.jvm.CatalogContext.create(j_options)
-
-
-def check_batch_write(j_table):
-    gateway = get_gateway()
-    bucket_mode = j_table.bucketMode()
-    if bucket_mode == gateway.jvm.BucketMode.HASH_DYNAMIC \
-            or bucket_mode == gateway.jvm.BucketMode.CROSS_PARTITION:
-        raise TypeError("Doesn't support writing dynamic bucket or cross partition table.")
+# ------------------------ for catalog options ------------------------
+MAX_WORKERS = "max-workers"

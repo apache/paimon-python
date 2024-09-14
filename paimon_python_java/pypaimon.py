@@ -16,13 +16,12 @@
 # limitations under the License.
 ################################################################################
 
-from java_based_implementation.java_gateway import get_gateway
-from java_based_implementation.util import constants
-from java_based_implementation.util.java_utils import to_j_catalog_context, check_batch_write
+import pyarrow as pa
+
+from paimon_python_java.java_gateway import get_gateway
+from paimon_python_java.util import java_utils, constants
 from paimon_python_api import (catalog, table, read_builder, table_scan, split, table_read,
                                write_builder, table_write, commit_message, table_commit)
-from pyarrow import (RecordBatch, BufferOutputStream, RecordBatchStreamWriter,
-                     RecordBatchStreamReader, BufferReader, RecordBatchReader)
 from typing import List, Iterator
 
 
@@ -34,7 +33,7 @@ class Catalog(catalog.Catalog):
 
     @staticmethod
     def create(catalog_options: dict) -> 'Catalog':
-        j_catalog_context = to_j_catalog_context(catalog_options)
+        j_catalog_context = java_utils.to_j_catalog_context(catalog_options)
         gateway = get_gateway()
         j_catalog = gateway.jvm.CatalogFactory.createCatalog(j_catalog_context)
         return Catalog(j_catalog, catalog_options)
@@ -57,7 +56,7 @@ class Table(table.Table):
         return ReadBuilder(j_read_builder, self._j_table.rowType(), self._catalog_options)
 
     def new_batch_write_builder(self) -> 'BatchWriteBuilder':
-        check_batch_write(self._j_table)
+        java_utils.check_batch_write(self._j_table)
         j_batch_write_builder = get_gateway().jvm.InvocationUtil.getBatchWriteBuilder(self._j_table)
         return BatchWriteBuilder(j_batch_write_builder, self._j_table.rowType())
 
@@ -129,7 +128,7 @@ class TableRead(table_read.TableRead):
         j_splits = list(map(lambda s: s.to_j_split(), splits))
         self._j_bytes_reader.setSplits(j_splits)
         batch_iterator = self._batch_generator()
-        return RecordBatchReader.from_batches(self._arrow_schema, batch_iterator)
+        return pa.RecordBatchReader.from_batches(self._arrow_schema, batch_iterator)
 
     def _init(self):
         if self._j_bytes_reader is None:
@@ -147,17 +146,17 @@ class TableRead(table_read.TableRead):
 
         if self._arrow_schema is None:
             schema_bytes = self._j_bytes_reader.serializeSchema()
-            schema_reader = RecordBatchStreamReader(BufferReader(schema_bytes))
+            schema_reader = pa.RecordBatchStreamReader(pa.BufferReader(schema_bytes))
             self._arrow_schema = schema_reader.schema
             schema_reader.close()
 
-    def _batch_generator(self) -> Iterator[RecordBatch]:
+    def _batch_generator(self) -> Iterator[pa.RecordBatch]:
         while True:
             next_bytes = self._j_bytes_reader.next()
             if next_bytes is None:
                 break
             else:
-                stream_reader = RecordBatchStreamReader(BufferReader(next_bytes))
+                stream_reader = pa.RecordBatchStreamReader(pa.BufferReader(next_bytes))
                 yield from stream_reader
 
 
@@ -187,9 +186,9 @@ class BatchTableWrite(table_write.BatchTableWrite):
         self._j_bytes_writer = get_gateway().jvm.InvocationUtil.createBytesWriter(
             j_batch_table_write, j_row_type)
 
-    def write(self, record_batch: RecordBatch):
-        stream = BufferOutputStream()
-        with RecordBatchStreamWriter(stream, record_batch.schema) as writer:
+    def write(self, record_batch: pa.RecordBatch):
+        stream = pa.BufferOutputStream()
+        with pa.RecordBatchStreamWriter(stream, record_batch.schema) as writer:
             writer.write(record_batch)
             writer.close()
         arrow_bytes = stream.getvalue().to_pybytes()

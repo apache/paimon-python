@@ -16,8 +16,8 @@
 # limitations under the License.
 ################################################################################
 
-from java_based_implementation.java_gateway import get_gateway
-from java_based_implementation.util.java_utils import to_j_catalog_context
+from paimon_python_java.java_gateway import get_gateway
+from paimon_python_java.util import java_utils
 
 
 def create_simple_table(warehouse, database, table_name, has_pk, options=None):
@@ -29,7 +29,7 @@ def create_simple_table(warehouse, database, table_name, has_pk, options=None):
 
     gateway = get_gateway()
 
-    j_catalog_context = to_j_catalog_context({'warehouse': warehouse})
+    j_catalog_context = java_utils.to_j_catalog_context({'warehouse': warehouse})
     j_catalog = gateway.jvm.CatalogFactory.createCatalog(j_catalog_context)
 
     j_schema_builder = (

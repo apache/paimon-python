@@ -20,11 +20,12 @@ import tempfile
 import unittest
 import pandas as pd
 import pyarrow as pa
+import setup_utils.java_setuputils as setuputils
 
-from java_based_implementation.api_impl import Catalog, Table
-from java_based_implementation.java_gateway import get_gateway
-from java_based_implementation.tests.utils import create_simple_table
-from java_based_implementation.util import java_utils, setup_utils
+from paimon_python_java import Catalog, Table
+from paimon_python_java.java_gateway import get_gateway
+from paimon_python_java.tests.utils import create_simple_table
+from paimon_python_java.util import java_utils
 from py4j.protocol import Py4JJavaError
 
 
@@ -32,12 +33,12 @@ class TableWriteReadTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        setup_utils.setup_java_bridge()
+        setuputils.setup_java_bridge()
         cls.warehouse = tempfile.mkdtemp()
 
     @classmethod
     def tearDownClass(cls):
-        setup_utils.clean()
+        setuputils.clean()
 
     def testReadEmptyAppendTable(self):
         create_simple_table(self.warehouse, 'default', 'empty_append_table', False)

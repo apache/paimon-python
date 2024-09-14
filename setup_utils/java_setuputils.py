@@ -16,23 +16,21 @@
 # limitations under the License.
 ################################################################################
 
-import importlib
 import os
 import shutil
 import subprocess
 
-from java_based_implementation.util import constants
-from java_based_implementation.util.constants import PYPAIMON_JAVA_CLASSPATH
+from xml.etree import ElementTree
 
-_JAVA_IMPL_MODULE = 'java_based_implementation'
+_JAVA_IMPL_MODULE = 'paimon_python_java'
 _JAVA_DEPS = 'java_dependencies'
 _JAVA_BRIDGE = 'paimon-python-java-bridge'
-# TODO configure version
-_JAVA_BRIDGE_VERSION = '0.9-SNAPSHOT'
+
+_PYPAIMON_TOX_TEST = '_PYPAIMON_TOX_TEST'
 
 
 def get_package_data():
-    is_tox_test = os.environ.get(constants.PYPAIMON_TOX_TEST)
+    is_tox_test = os.environ.get(_PYPAIMON_TOX_TEST)
     if is_tox_test and is_tox_test.lower() == "true":
         return ['']
 
@@ -44,18 +42,6 @@ def clean():
     java_deps_dir = os.path.join(_find_java_impl_dir(), _JAVA_DEPS)
     if os.path.exists(java_deps_dir):
         shutil.rmtree(java_deps_dir)
-
-
-def get_classpath(env):
-    user_defined = env.get(PYPAIMON_JAVA_CLASSPATH)
-
-    module = importlib.import_module(_JAVA_IMPL_MODULE)
-    builtin_java_bridge = os.path.join(*module.__path__, _JAVA_DEPS, _JAVA_BRIDGE + '.jar')
-
-    if user_defined is None:
-        return builtin_java_bridge
-    else:
-        return os.pathsep.join([builtin_java_bridge, user_defined])
 
 
 def setup_java_bridge():
@@ -79,11 +65,21 @@ def setup_java_bridge():
 
     shutil.copy(
         os.path.join(java_bridge_module, 'target/{}-{}.jar'
-                     .format(_JAVA_BRIDGE, _JAVA_BRIDGE_VERSION)),
+                     .format(_JAVA_BRIDGE, _extract_bridge_version())),
         java_bridge_dst
     )
 
 
+def _extract_bridge_version():
+    pom_path = os.path.join(_find_java_impl_dir(), _JAVA_BRIDGE, 'pom.xml')
+    return ElementTree.parse(pom_path).getroot().find(
+        'POM:version',
+        namespaces={
+            'POM': 'http://maven.apache.org/POM/4.0.0'
+        }).text
+
+
 def _find_java_impl_dir():
-    abspath = os.path.abspath(__file__)
-    return os.path.dirname(os.path.dirname(abspath))
+    this_dir = os.path.abspath(os.path.dirname(__file__))
+    paimon_python_dir = os.path.dirname(this_dir)
+    return os.path.join(paimon_python_dir, _JAVA_IMPL_MODULE)

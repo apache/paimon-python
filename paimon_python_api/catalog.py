@@ -17,7 +17,7 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from paimon_python_api.table import Table
+from paimon_python_api import Table
 
 
 class Catalog(ABC):

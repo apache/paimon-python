@@ -26,9 +26,9 @@ from py4j.java_gateway import (java_import, logger, JavaGateway, GatewayParamete
                                CallbackServerParameters)
 from threading import RLock
 
-from java_based_implementation.gateway_server import launch_gateway_server_process
-from java_based_implementation.util.constants import PYPAIMON_CONN_INFO_PATH
-from java_based_implementation.util.exceptions import install_py4j_hooks
+from paimon_python_java.gateway_server import launch_gateway_server_process
+from paimon_python_java import constants
+from paimon_python_java.util.exceptions import install_py4j_hooks
 
 _gateway = None
 _lock = RLock()
@@ -73,7 +73,7 @@ def launch_gateway():
         os.unlink(conn_info_file)
 
         env = dict(os.environ)
-        env[PYPAIMON_CONN_INFO_PATH] = conn_info_file
+        env[constants.PYPAIMON_CONN_INFO_PATH] = conn_info_file
 
         p = launch_gateway_server_process(env)
 

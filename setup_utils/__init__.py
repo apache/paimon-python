@@ -15,3 +15,5 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
+
+"""This module only contains utils for setup and won't be packaged."""

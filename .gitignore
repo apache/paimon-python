@@ -15,4 +15,4 @@ dev/.stage.txt
 dev/download
 dev/log
 dist/
-paimon_python.egg-info/
+*.egg-info/

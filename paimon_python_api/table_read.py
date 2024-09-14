@@ -16,9 +16,10 @@
 # limitations under the License.
 #################################################################################
 
+import pyarrow as pa
+
 from abc import ABC, abstractmethod
-from pyarrow import RecordBatchReader
-from paimon_python_api.split import Split
+from paimon_python_api import Split
 from typing import List
 
 
@@ -26,5 +27,5 @@ class TableRead(ABC):
     """To read data from data splits."""
 
     @abstractmethod
-    def create_reader(self, splits: List[Split]) -> RecordBatchReader:
+    def create_reader(self, splits: List[Split]) -> pa.RecordBatchReader:
         """Return a reader containing batches of pyarrow format."""

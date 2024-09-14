@@ -16,14 +16,13 @@
 # limitations under the License.
 ################################################################################
 
+import importlib
 import os
 import platform
 import signal
 
 from subprocess import Popen, PIPE
-from java_based_implementation.util.constants import (PYPAIMON_JVM_ARGS, PYPAIMON_MAIN_ARGS,
-                                                      PYPAIMON_MAIN_CLASS)
-from java_based_implementation.util.setup_utils import get_classpath
+from paimon_python_java import constants
 
 
 def on_windows():
@@ -47,9 +46,9 @@ def launch_gateway_server_process(env):
     java_executable = find_java_executable()
     # TODO construct Java module log settings
     log_settings = []
-    jvm_args = env.get(PYPAIMON_JVM_ARGS, '').split()
-    classpath = get_classpath(env)
-    main_args = env.get(PYPAIMON_MAIN_ARGS, '').split()
+    jvm_args = env.get(constants.PYPAIMON_JVM_ARGS, '').split()
+    classpath = _get_classpath(env)
+    main_args = env.get(constants.PYPAIMON_MAIN_ARGS, '').split()
     command = [
         java_executable,
         *jvm_args,
@@ -60,7 +59,7 @@ def launch_gateway_server_process(env):
         "-cp",
         classpath,
         "-c",
-        PYPAIMON_MAIN_CLASS,
+        constants.PYPAIMON_MAIN_CLASS,
         *main_args
     ]
 
@@ -72,3 +71,20 @@ def launch_gateway_server_process(env):
         preexec_fn = preexec_func
     return Popen(list(filter(lambda c: len(c) != 0, command)),
                  stdin=PIPE, stderr=PIPE, preexec_fn=preexec_fn, env=env)
+
+
+_JAVA_IMPL_MODULE = 'paimon_python_java'
+_JAVA_DEPS = 'java_dependencies'
+_JAVA_BRIDGE = 'paimon-python-java-bridge'
+
+
+def _get_classpath(env):
+    user_defined = env.get(constants.PYPAIMON_JAVA_CLASSPATH)
+
+    module = importlib.import_module(_JAVA_IMPL_MODULE)
+    builtin_java_bridge = os.path.join(*module.__path__, _JAVA_DEPS, _JAVA_BRIDGE + '.jar')
+
+    if user_defined is None:
+        return builtin_java_bridge
+    else:
+        return os.pathsep.join([builtin_java_bridge, user_defined])

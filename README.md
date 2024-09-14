@@ -22,30 +22,28 @@ This repo is for Apache Paimon Python SDK.
 You can verify the setup by right-clicking on any file or folder in the flink-python project
 and running "External Tools" → "flake8".
 
-# Usage
+## Check
 
-## Java-Based Implementation
+We provide script to check codes.
 
-We can use `py4j` to leverage Java code to read Paimon data. This section describes how to use this implementation.
-
-### Set Environment Variables
-
-`py4j` need to access a JVM, so we should set JVM arguments (optional) and Java classpath. A convenient way is using
-`os` packages to set environment variables which only affect current process.
-
-```python
-import os
-
-os.environ['PYPAIMON_JAVA_CLASSPATH'] = '/path/to/dependent_jars/*'
-os.environ['_PYPAIMON_JVM_ARGS'] = 'jvm_arg1 jvm_arg2 ...'
+```shell
+./dev/lint-python.sh    # execute all checks
+./dev/lint-python.sh -h # run this to see more usages         
 ```
 
-NOTE: the package has set paimon core and hadoop dependencies. If you just test in local or run code in hadoop, you doesn't
-need to set classpath. If you need other dependencies such as OSS/S3 filesystem jars, or special catalog which isn't implemented 
-in paimon core, please download jars and set classpath.
+## Build
 
-# API Reference
-TODO
+We provide script to build wheel.
+
+```shell
+./dev/build-wheels.sh
+```
+
+The target wheel is under `dist/`
+
+# Usage
+
+See Apache Paimon Python API [Doc](https://paimon.apache.org/docs/master/program-api/python-api/).
 
 
 

@@ -23,13 +23,13 @@
 
     <groupId>org.apache.paimon</groupId>
     <artifactId>paimon-python-java-bridge</artifactId>
-    <version>0.9-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <name>Paimon : Python-Java Bridge</name>
 
     <packaging>jar</packaging>
 
     <properties>
-        <paimon.version>0.9-SNAPSHOT</paimon.version>
+        <paimon.version>1.0-SNAPSHOT</paimon.version>
         <flink.shaded.hadoop.version>2.8.3-10.0</flink.shaded.hadoop.version>
         <py4j.version>0.10.9.7</py4j.version>
         <slf4j.version>1.7.32</slf4j.version>
