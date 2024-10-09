@@ -21,8 +21,8 @@ import pyarrow as pa
 from paimon_python_java.java_gateway import get_gateway
 from paimon_python_java.util import java_utils, constants
 from paimon_python_api import (catalog, table, read_builder, table_scan, split, table_read,
-                               write_builder, table_write, commit_message, table_commit)
-from typing import List, Iterator
+                               write_builder, table_write, commit_message, table_commit, Schema)
+from typing import List, Iterator, Optional
 
 
 class Catalog(catalog.Catalog):
@@ -39,10 +39,19 @@ class Catalog(catalog.Catalog):
         return Catalog(j_catalog, catalog_options)
 
     def get_table(self, identifier: str) -> 'Table':
-        gateway = get_gateway()
-        j_identifier = gateway.jvm.Identifier.fromString(identifier)
+        j_identifier = java_utils.to_j_identifier(identifier)
         j_table = self._j_catalog.getTable(j_identifier)
         return Table(j_table, self._catalog_options)
+
+    def create_database(self, name: str, ignore_if_exists: bool, properties: Optional[dict] = None):
+        if properties is None:
+            properties = {}
+        self._j_catalog.createDatabase(name, ignore_if_exists, properties)
+
+    def create_table(self, identifier: str, schema: Schema, ignore_if_exists: bool):
+        j_identifier = java_utils.to_j_identifier(identifier)
+        j_schema = java_utils.to_paimon_schema(schema)
+        self._j_catalog.createTable(j_identifier, j_schema, ignore_if_exists)
 
 
 class Table(table.Table):

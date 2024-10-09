@@ -16,8 +16,11 @@
 # limitations under the License.
 #################################################################################
 
+import pyarrow as pa
+
 from abc import ABC, abstractmethod
 from paimon_python_api import ReadBuilder, BatchWriteBuilder
+from typing import Optional, List
 
 
 class Table(ABC):
@@ -30,3 +33,19 @@ class Table(ABC):
     @abstractmethod
     def new_batch_write_builder(self) -> BatchWriteBuilder:
         """Returns a builder for building batch table write and table commit."""
+
+
+class Schema:
+    """Schema of a table."""
+
+    def __init__(self,
+                 pa_schema: pa.Schema,
+                 partition_keys: Optional[List[str]] = None,
+                 primary_keys: Optional[List[str]] = None,
+                 options: Optional[dict] = None,
+                 comment: Optional[str] = None):
+        self.pa_schema = pa_schema
+        self.partition_keys = partition_keys
+        self.primary_keys = primary_keys
+        self.options = options
+        self.comment = comment

@@ -24,7 +24,7 @@ from .commit_message import CommitMessage
 from .table_commit import BatchTableCommit
 from .table_write import BatchTableWrite
 from .write_builder import BatchWriteBuilder
-from .table import Table
+from .table import Table, Schema
 from .catalog import Catalog
 
 __all__ = [
@@ -38,5 +38,6 @@ __all__ = [
     'BatchTableWrite',
     'BatchWriteBuilder',
     'Table',
+    'Schema',
     'Catalog'
 ]

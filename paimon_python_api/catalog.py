@@ -17,7 +17,8 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from paimon_python_api import Table
+from typing import Optional
+from paimon_python_api import Table, Schema
 
 
 class Catalog(ABC):
@@ -34,3 +35,11 @@ class Catalog(ABC):
     @abstractmethod
     def get_table(self, identifier: str) -> Table:
         """Get paimon table identified by the given Identifier."""
+
+    @abstractmethod
+    def create_database(self, name: str, ignore_if_exists: bool, properties: Optional[dict] = None):
+        """Create a database with properties."""
+
+    @abstractmethod
+    def create_table(self, identifier: str, schema: Schema, ignore_if_exists: bool):
+        """Create table."""
