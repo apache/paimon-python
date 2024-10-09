@@ -185,7 +185,9 @@ class BatchWriteBuilder(write_builder.BatchWriteBuilder):
         self._j_row_type = j_row_type
         self._arrow_schema = arrow_schema
 
-    def with_overwrite(self, static_partition: dict) -> 'BatchWriteBuilder':
+    def overwrite(self, static_partition: Optional[dict] = None) -> 'BatchWriteBuilder':
+        if static_partition is None:
+            static_partition = {}
         self._j_batch_write_builder.withOverwrite(static_partition)
         return self
 
