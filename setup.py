@@ -17,9 +17,10 @@
 ################################################################################
 
 import fnmatch
-import java_based_implementation.util.setup_utils
+import io
 import os
 import shutil
+import setup_utils.java_setuputils as java_setuputils
 
 from setuptools import Command, setup
 
@@ -50,12 +51,12 @@ class CleanCommand(Command):
 try:
     PACKAGES = [
         'paimon_python_api',
-        'java_based_implementation',
-        'java_based_implementation.util'
+        'paimon_python_java',
+        'paimon_python_java.util'
     ]
 
     PACKAGE_DATA = {
-        'java_based_implementation': java_based_implementation.util.setup_utils.get_package_data()
+        'paimon_python_java': java_setuputils.get_package_data()
     }
 
     install_requires = [
@@ -67,20 +68,25 @@ try:
         'pyarrow>=5.0.0'
     ]
 
+    with io.open('README.md', 'r', encoding='utf-8') as f:
+        long_description = f.read()
+
     setup(
         name='paimon_python',
-        version='0.9.0.dev1',
+        version='0.1.0.dev0',
         packages=PACKAGES,
         include_package_data=True,
         package_data=PACKAGE_DATA,
         cmdclass={'clean': CleanCommand},
         install_requires=install_requires,
         description='Apache Paimon Python API',
+        long_description=long_description,
+        long_description_content_type='text/markdown',
         author='Apache Software Foundation',
         author_email='dev@paimon.apache.org',
         url='https://paimon.apache.org',
         classifiers=[
-            'Development Status :: 5 - Production/Stable',
+            'Development Status :: 4 - Beta',
             'License :: OSI Approved :: Apache Software License',
             'Programming Language :: Python :: 3.8',
             'Programming Language :: Python :: 3.9',
@@ -89,4 +95,4 @@ try:
         python_requires='>=3.8'
     )
 finally:
-    java_based_implementation.util.setup_utils.clean()
+    java_setuputils.clean()

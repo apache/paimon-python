@@ -17,8 +17,7 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from paimon_python_api.table_commit import BatchTableCommit
-from paimon_python_api.table_write import BatchTableWrite
+from paimon_python_api import BatchTableCommit, BatchTableWrite
 
 
 class BatchWriteBuilder(ABC):

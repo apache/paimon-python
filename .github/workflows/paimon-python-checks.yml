@@ -22,9 +22,10 @@ on:
   push:
   pull_request:
     paths-ignore:
-      - 'dev/**'
-      - 'java_based_implementation/paimon-python-java-bridge/**'
       - '**/*.md'
+
+env:
+  JDK_VERSION: 8
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.number || github.run_id }}
@@ -37,6 +38,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Set up JDK ${{ env.JDK_VERSION }}
+        uses: actions/setup-java@v2
+        with:
+          java-version: ${{ env.JDK_VERSION }}
+          distribution: 'adopt'
       - name: Run lint-python.sh
         run: |
           chmod +x dev/lint-python.sh

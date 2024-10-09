@@ -17,8 +17,7 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from paimon_python_api.read_builder import ReadBuilder
-from paimon_python_api.write_builder import BatchWriteBuilder
+from paimon_python_api import ReadBuilder, BatchWriteBuilder
 
 
 class Table(ABC):

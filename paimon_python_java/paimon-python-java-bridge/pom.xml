@@ -23,13 +23,13 @@
 
     <groupId>org.apache.paimon</groupId>
     <artifactId>paimon-python-java-bridge</artifactId>
-    <version>0.9-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <name>Paimon : Python-Java Bridge</name>
 
     <packaging>jar</packaging>
 
     <properties>
-        <paimon.version>0.9-SNAPSHOT</paimon.version>
+        <paimon.version>0.9.0</paimon.version>
         <flink.shaded.hadoop.version>2.8.3-10.0</flink.shaded.hadoop.version>
         <py4j.version>0.10.9.7</py4j.version>
         <slf4j.version>1.7.32</slf4j.version>
@@ -37,6 +37,7 @@
         <spotless.version>2.13.0</spotless.version>
         <spotless.delimiter>package</spotless.delimiter>
         <arrow.version>14.0.0</arrow.version>
+        <target.java.version>1.8</target.java.version>
     </properties>
 
     <dependencies>
@@ -136,6 +137,23 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.0</version>
+                    <configuration>
+                        <source>${target.java.version}</source>
+                        <target>${target.java.version}</target>
+                        <!-- The semantics of this option are reversed, see MCOMPILER-209. -->
+                        <useIncrementalCompilation>false</useIncrementalCompilation>
+                        <compilerArgs>
+                            <!-- Prevents recompilation due to missing package-info.class, see MCOMPILER-205 -->
+                            <arg>-Xpkginfo:always</arg>
+                            <arg>-Xlint:deprecation</arg>
+                        </compilerArgs>
+                    </configuration>
+                </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

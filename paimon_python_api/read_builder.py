@@ -17,8 +17,7 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from paimon_python_api.table_read import TableRead
-from paimon_python_api.table_scan import TableScan
+from paimon_python_api import TableRead, TableScan
 from typing import List
 
 
