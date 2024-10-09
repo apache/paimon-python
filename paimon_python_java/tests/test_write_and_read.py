@@ -22,20 +22,23 @@ import tempfile
 import unittest
 import pandas as pd
 import pyarrow as pa
-import setup_utils.java_setuputils as setuputils
 
 from paimon_python_api import Schema
 from paimon_python_java import Catalog
 from paimon_python_java.java_gateway import get_gateway
+from paimon_python_java.tests import utils
 from paimon_python_java.util import java_utils
 from py4j.protocol import Py4JJavaError
+from setup_utils import java_setuputils
 
 
 class TableWriteReadTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        setuputils.setup_java_bridge()
+        java_setuputils.setup_java_bridge()
+        cls.hadoop_path = tempfile.mkdtemp()
+        utils.setup_hadoop_bundle_jar(cls.hadoop_path)
         cls.warehouse = tempfile.mkdtemp()
         cls.simple_pa_schema = pa.schema([
             ('f0', pa.int32()),
@@ -46,7 +49,9 @@ class TableWriteReadTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        setuputils.clean()
+        java_setuputils.clean()
+        if os.path.exists(cls.hadoop_path):
+            shutil.rmtree(cls.hadoop_path)
         if os.path.exists(cls.warehouse):
             shutil.rmtree(cls.warehouse)
 
