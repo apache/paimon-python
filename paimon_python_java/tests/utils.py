@@ -16,13 +16,22 @@
 # limitations under the License.
 ################################################################################
 
-# ---------------------------- for env var ----------------------------
-PYPAIMON_CONN_INFO_PATH = '_PYPAIMON_CONN_INFO_PATH'
-PYPAIMON_JVM_ARGS = '_PYPAIMON_JVM_ARGS'
-PYPAIMON_JAVA_CLASSPATH = '_PYPAIMON_JAVA_CLASSPATH'
-PYPAIMON_HADOOP_CLASSPATH = '_PYPAIMON_HADOOP_CLASSPATH'
-PYPAIMON_MAIN_CLASS = 'org.apache.paimon.python.PythonGatewayServer'
-PYPAIMON_MAIN_ARGS = '_PYPAIMON_MAIN_ARGS'
+import os
+import urllib.request
 
-# ------------------------ for catalog options ------------------------
-MAX_WORKERS = "max-workers"
+from paimon_python_java.util import constants
+
+
+def setup_hadoop_bundle_jar(hadoop_dir):
+    url = 'https://repo.maven.apache.org/maven2/org/apache/flink/' \
+          'flink-shaded-hadoop-2-uber/2.8.3-10.0/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar'
+
+    response = urllib.request.urlopen(url)
+    if not os.path.exists(hadoop_dir):
+        os.mkdir(hadoop_dir)
+
+    jar_path = os.path.join(hadoop_dir, "bundled-hadoop.jar")
+    with open(jar_path, 'wb') as file:
+        file.write(response.read())
+
+    os.environ[constants.PYPAIMON_HADOOP_CLASSPATH] = jar_path

@@ -24,9 +24,9 @@ import tempfile
 import pyarrow as pa
 import unittest
 
-
 from paimon_python_api import Schema
 from paimon_python_java import Catalog
+from paimon_python_java.tests import utils
 from paimon_python_java.util import java_utils
 from setup_utils import java_setuputils
 
@@ -36,6 +36,8 @@ class DataTypesTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         java_setuputils.setup_java_bridge()
+        cls.hadoop_path = tempfile.mkdtemp()
+        utils.setup_hadoop_bundle_jar(cls.hadoop_path)
         cls.warehouse = tempfile.mkdtemp()
         cls.simple_pa_schema = pa.schema([
             ('f0', pa.int32()),
@@ -47,6 +49,8 @@ class DataTypesTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         java_setuputils.clean()
+        if os.path.exists(cls.hadoop_path):
+            shutil.rmtree(cls.hadoop_path)
         if os.path.exists(cls.warehouse):
             shutil.rmtree(cls.warehouse)
 

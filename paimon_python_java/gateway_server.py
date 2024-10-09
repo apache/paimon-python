@@ -79,12 +79,30 @@ _JAVA_BRIDGE = 'paimon-python-java-bridge'
 
 
 def _get_classpath(env):
-    user_defined = env.get(constants.PYPAIMON_JAVA_CLASSPATH)
+    classpath = []
 
     module = importlib.import_module(_JAVA_IMPL_MODULE)
     builtin_java_bridge = os.path.join(*module.__path__, _JAVA_DEPS, _JAVA_BRIDGE + '.jar')
+    classpath.append(builtin_java_bridge)
 
-    if user_defined is None:
-        return builtin_java_bridge
+    # user defined
+    if constants.PYPAIMON_JAVA_CLASSPATH in env:
+        classpath.append(env[constants.PYPAIMON_JAVA_CLASSPATH])
+
+    # hadoop
+    hadoop_classpath = _get_hadoop_classpath(env)
+    if hadoop_classpath is not None:
+        classpath.append(hadoop_classpath)
+
+    return os.pathsep.join(classpath)
+
+
+def _get_hadoop_classpath(env):
+    if constants.PYPAIMON_HADOOP_CLASSPATH in env:
+        return env[constants.PYPAIMON_HADOOP_CLASSPATH]
+
+    if 'HADOOP_CLASSPATH' in env:
+        return None
     else:
-        return os.pathsep.join([builtin_java_bridge, user_defined])
+        raise EnvironmentError(f"You haven't set '{constants.PYPAIMON_HADOOP_CLASSPATH}', \
+ and 'HADOOP_CLASSPATH' is also not set. Ensure one of them is set.")
