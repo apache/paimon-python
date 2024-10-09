@@ -18,16 +18,17 @@
 
 from abc import ABC, abstractmethod
 from paimon_python_api import BatchTableCommit, BatchTableWrite
+from typing import Optional
 
 
 class BatchWriteBuilder(ABC):
     """An interface for building the TableScan and TableRead."""
 
     @abstractmethod
-    def with_overwrite(self, static_partition: dict) -> 'BatchWriteBuilder':
+    def overwrite(self, static_partition: Optional[dict] = None) -> 'BatchWriteBuilder':
         """
         Overwrite writing, same as the 'INSERT OVERWRITE T PARTITION (...)' semantics of SQL.
-        If you pass an empty dict, it means OVERWRITE whole table.
+        If you pass None, it means OVERWRITE whole table.
         """
 
     @abstractmethod
