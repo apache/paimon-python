@@ -28,7 +28,6 @@ from paimon_python_java import Catalog
 from paimon_python_java.java_gateway import get_gateway
 from paimon_python_java.tests import utils
 from paimon_python_java.util import java_utils
-from py4j.protocol import Py4JJavaError
 from setup_utils import java_setuputils
 
 
@@ -111,7 +110,7 @@ class TableWriteReadTest(unittest.TestCase):
         data_frames = [
             batch.to_pandas()
             for split in splits
-            for batch in table_read.create_reader([split])
+            for batch in table_read.to_arrow_batch_reader([split])
         ]
         self.assertEqual(len(data_frames), 0)
 
@@ -133,7 +132,7 @@ class TableWriteReadTest(unittest.TestCase):
         table_write = write_builder.new_write()
         table_commit = write_builder.new_commit()
 
-        table_write.write(record_batch)
+        table_write.write_arrow_batch(record_batch)
         commit_messages = table_write.prepare_commit()
         table_commit.commit(commit_messages)
 
@@ -149,7 +148,7 @@ class TableWriteReadTest(unittest.TestCase):
         data_frames = [
             batch.to_pandas()
             for split in splits
-            for batch in table_read.create_reader([split])
+            for batch in table_read.to_arrow_batch_reader([split])
         ]
         result = pd.concat(data_frames)
 
@@ -158,33 +157,6 @@ class TableWriteReadTest(unittest.TestCase):
         expected['f0'] = df['f0'].astype('int32')
         pd.testing.assert_frame_equal(
             result.reset_index(drop=True), expected.reset_index(drop=True))
-
-    def testWriteWrongSchema(self):
-        schema = Schema(self.simple_pa_schema)
-        self.catalog.create_table('default.test_wrong_schema', schema, False)
-        table = self.catalog.get_table('default.test_wrong_schema')
-
-        data = {
-            'f0': [1, 2, 3],
-            'f1': ['a', 'b', 'c'],
-        }
-        df = pd.DataFrame(data)
-        schema = pa.schema([
-            ('f0', pa.int64()),
-            ('f1', pa.string())
-        ])
-        record_batch = pa.RecordBatch.from_pandas(df, schema=schema)
-
-        write_builder = table.new_batch_write_builder()
-        table_write = write_builder.new_write()
-
-        with self.assertRaises(Py4JJavaError) as e:
-            table_write.write(record_batch)
-        self.assertEqual(
-            str(e.exception.java_exception),
-            '''java.lang.RuntimeException: Input schema isn't consistent with table schema.
-\tTable schema is: [f0: Int(32, true), f1: Utf8]
-\tInput schema is: [f0: Int(64, true), f1: Utf8]''')
 
     def testCannotWriteDynamicBucketTable(self):
         schema = Schema(self.simple_pa_schema, primary_keys=['f0'])
@@ -225,7 +197,7 @@ class TableWriteReadTest(unittest.TestCase):
             table_write = write_builder.new_write()
             table_commit = write_builder.new_commit()
 
-            table_write.write(record_batch)
+            table_write.write_arrow_batch(record_batch)
             commit_messages = table_write.prepare_commit()
             table_commit.commit(commit_messages)
 
@@ -237,7 +209,7 @@ class TableWriteReadTest(unittest.TestCase):
 
         data_frames = [
             batch.to_pandas()
-            for batch in table_read.create_reader(splits)
+            for batch in table_read.to_arrow_batch_reader(splits)
         ]
         result = pd.concat(data_frames)
 

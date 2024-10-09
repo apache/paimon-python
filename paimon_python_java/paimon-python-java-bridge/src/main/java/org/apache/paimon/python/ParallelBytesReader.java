@@ -18,7 +18,6 @@
 
 package org.apache.paimon.python;
 
-import org.apache.paimon.arrow.ArrowUtils;
 import org.apache.paimon.arrow.vector.ArrowFormatWriter;
 import org.apache.paimon.data.InternalRow;
 import org.apache.paimon.reader.RecordReader;
@@ -30,11 +29,8 @@ import org.apache.paimon.utils.ThreadPoolUtils;
 
 import org.apache.paimon.shade.guava30.com.google.common.collect.Iterators;
 
-import org.apache.arrow.vector.VectorSchemaRoot;
-
 import javax.annotation.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -77,15 +73,6 @@ public class ParallelBytesReader {
         bytesIterator = randomlyExecute(getExecutor(), makeProcessor(), splits);
     }
 
-    public byte[] serializeSchema() {
-        ArrowFormatWriter arrowFormatWriter = newWriter();
-        VectorSchemaRoot vsr = arrowFormatWriter.getVectorSchemaRoot();
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ArrowUtils.serializeToIpc(vsr, out);
-        arrowFormatWriter.close();
-        return out.toByteArray();
-    }
-
     @Nullable
     public byte[] next() {
         if (bytesIterator.hasNext()) {
@@ -110,7 +97,8 @@ public class ParallelBytesReader {
                 RecordReaderIterator<InternalRow> iterator =
                         new RecordReaderIterator<>(recordReader);
                 iterators.add(iterator);
-                ArrowFormatWriter arrowFormatWriter = newWriter();
+                ArrowFormatWriter arrowFormatWriter =
+                        new ArrowFormatWriter(rowType, DEFAULT_WRITE_BATCH_SIZE, true);
                 arrowFormatWriters.add(arrowFormatWriter);
                 return new RecordBytesIterator(iterator, arrowFormatWriter);
             } catch (IOException e) {
@@ -163,9 +151,5 @@ public class ParallelBytesReader {
             arrowFormatWriter.close();
         }
         arrowFormatWriters.clear();
-    }
-
-    private ArrowFormatWriter newWriter() {
-        return new ArrowFormatWriter(rowType, DEFAULT_WRITE_BATCH_SIZE, true);
     }
 }

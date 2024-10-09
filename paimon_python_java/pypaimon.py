@@ -16,6 +16,7 @@
 # limitations under the License.
 ################################################################################
 
+import pandas as pd
 import pyarrow as pa
 
 from paimon_python_java.java_gateway import get_gateway
@@ -59,23 +60,30 @@ class Table(table.Table):
     def __init__(self, j_table, catalog_options: dict):
         self._j_table = j_table
         self._catalog_options = catalog_options
+        # init arrow schema
+        schema_bytes = get_gateway().jvm.SchemaUtil.getArrowSchema(j_table.rowType())
+        schema_reader = pa.RecordBatchStreamReader(pa.BufferReader(schema_bytes))
+        self._arrow_schema = schema_reader.schema
+        schema_reader.close()
 
     def new_read_builder(self) -> 'ReadBuilder':
         j_read_builder = get_gateway().jvm.InvocationUtil.getReadBuilder(self._j_table)
-        return ReadBuilder(j_read_builder, self._j_table.rowType(), self._catalog_options)
+        return ReadBuilder(
+            j_read_builder, self._j_table.rowType(), self._catalog_options, self._arrow_schema)
 
     def new_batch_write_builder(self) -> 'BatchWriteBuilder':
         java_utils.check_batch_write(self._j_table)
         j_batch_write_builder = get_gateway().jvm.InvocationUtil.getBatchWriteBuilder(self._j_table)
-        return BatchWriteBuilder(j_batch_write_builder, self._j_table.rowType())
+        return BatchWriteBuilder(j_batch_write_builder, self._j_table.rowType(), self._arrow_schema)
 
 
 class ReadBuilder(read_builder.ReadBuilder):
 
-    def __init__(self, j_read_builder, j_row_type, catalog_options: dict):
+    def __init__(self, j_read_builder, j_row_type, catalog_options: dict, arrow_schema: pa.Schema):
         self._j_read_builder = j_read_builder
         self._j_row_type = j_row_type
         self._catalog_options = catalog_options
+        self._arrow_schema = arrow_schema
 
     def with_projection(self, projection: List[List[int]]) -> 'ReadBuilder':
         self._j_read_builder.withProjection(projection)
@@ -91,7 +99,7 @@ class ReadBuilder(read_builder.ReadBuilder):
 
     def new_read(self) -> 'TableRead':
         j_table_read = self._j_read_builder.newRead()
-        return TableRead(j_table_read, self._j_row_type, self._catalog_options)
+        return TableRead(j_table_read, self._j_row_type, self._catalog_options, self._arrow_schema)
 
 
 class TableScan(table_scan.TableScan):
@@ -125,19 +133,26 @@ class Split(split.Split):
 
 class TableRead(table_read.TableRead):
 
-    def __init__(self, j_table_read, j_row_type, catalog_options):
+    def __init__(self, j_table_read, j_row_type, catalog_options, arrow_schema):
         self._j_table_read = j_table_read
         self._j_row_type = j_row_type
         self._catalog_options = catalog_options
         self._j_bytes_reader = None
-        self._arrow_schema = None
+        self._arrow_schema = arrow_schema
 
-    def create_reader(self, splits):
+    def to_arrow(self, splits):
+        record_batch_reader = self.to_arrow_batch_reader(splits)
+        return pa.Table.from_batches(record_batch_reader, schema=self._arrow_schema)
+
+    def to_arrow_batch_reader(self, splits):
         self._init()
         j_splits = list(map(lambda s: s.to_j_split(), splits))
         self._j_bytes_reader.setSplits(j_splits)
         batch_iterator = self._batch_generator()
         return pa.RecordBatchReader.from_batches(self._arrow_schema, batch_iterator)
+
+    def to_pandas(self, splits: List[Split]) -> pd.DataFrame:
+        return self.to_arrow(splits).to_pandas()
 
     def _init(self):
         if self._j_bytes_reader is None:
@@ -153,12 +168,6 @@ class TableRead(table_read.TableRead):
             self._j_bytes_reader = get_gateway().jvm.InvocationUtil.createParallelBytesReader(
                 self._j_table_read, self._j_row_type, max_workers)
 
-        if self._arrow_schema is None:
-            schema_bytes = self._j_bytes_reader.serializeSchema()
-            schema_reader = pa.RecordBatchStreamReader(pa.BufferReader(schema_bytes))
-            self._arrow_schema = schema_reader.schema
-            schema_reader.close()
-
     def _batch_generator(self) -> Iterator[pa.RecordBatch]:
         while True:
             next_bytes = self._j_bytes_reader.next()
@@ -171,9 +180,10 @@ class TableRead(table_read.TableRead):
 
 class BatchWriteBuilder(write_builder.BatchWriteBuilder):
 
-    def __init__(self, j_batch_write_builder, j_row_type):
+    def __init__(self, j_batch_write_builder, j_row_type, arrow_schema: pa.Schema):
         self._j_batch_write_builder = j_batch_write_builder
         self._j_row_type = j_row_type
+        self._arrow_schema = arrow_schema
 
     def with_overwrite(self, static_partition: dict) -> 'BatchWriteBuilder':
         self._j_batch_write_builder.withOverwrite(static_partition)
@@ -181,7 +191,7 @@ class BatchWriteBuilder(write_builder.BatchWriteBuilder):
 
     def new_write(self) -> 'BatchTableWrite':
         j_batch_table_write = self._j_batch_write_builder.newWrite()
-        return BatchTableWrite(j_batch_table_write, self._j_row_type)
+        return BatchTableWrite(j_batch_table_write, self._j_row_type, self._arrow_schema)
 
     def new_commit(self) -> 'BatchTableCommit':
         j_batch_table_commit = self._j_batch_write_builder.newCommit()
@@ -190,18 +200,31 @@ class BatchWriteBuilder(write_builder.BatchWriteBuilder):
 
 class BatchTableWrite(table_write.BatchTableWrite):
 
-    def __init__(self, j_batch_table_write, j_row_type):
+    def __init__(self, j_batch_table_write, j_row_type, arrow_schema: pa.Schema):
         self._j_batch_table_write = j_batch_table_write
         self._j_bytes_writer = get_gateway().jvm.InvocationUtil.createBytesWriter(
             j_batch_table_write, j_row_type)
+        self._arrow_schema = arrow_schema
 
-    def write(self, record_batch: pa.RecordBatch):
+    def write_arrow(self, table):
+        for record_batch in table.to_reader():
+            # TODO: can we use a reusable stream?
+            stream = pa.BufferOutputStream()
+            with pa.RecordBatchStreamWriter(stream, self._arrow_schema) as writer:
+                writer.write(record_batch)
+            arrow_bytes = stream.getvalue().to_pybytes()
+            self._j_bytes_writer.write(arrow_bytes)
+
+    def write_arrow_batch(self, record_batch):
         stream = pa.BufferOutputStream()
-        with pa.RecordBatchStreamWriter(stream, record_batch.schema) as writer:
+        with pa.RecordBatchStreamWriter(stream, self._arrow_schema) as writer:
             writer.write(record_batch)
-            writer.close()
         arrow_bytes = stream.getvalue().to_pybytes()
         self._j_bytes_writer.write(arrow_bytes)
+
+    def write_pandas(self, dataframe: pd.DataFrame):
+        record_batch = pa.RecordBatch.from_pandas(dataframe, schema=self._arrow_schema)
+        self.write_arrow_batch(record_batch)
 
     def prepare_commit(self) -> List['CommitMessage']:
         j_commit_messages = self._j_batch_table_write.prepareCommit()

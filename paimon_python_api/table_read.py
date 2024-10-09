@@ -16,6 +16,7 @@
 # limitations under the License.
 #################################################################################
 
+import pandas as pd
 import pyarrow as pa
 
 from abc import ABC, abstractmethod
@@ -27,5 +28,13 @@ class TableRead(ABC):
     """To read data from data splits."""
 
     @abstractmethod
-    def create_reader(self, splits: List[Split]) -> pa.RecordBatchReader:
-        """Return a reader containing batches of pyarrow format."""
+    def to_arrow(self, splits: List[Split]) -> pa.Table:
+        """Read data from splits and converted to pyarrow.Table format."""
+
+    @abstractmethod
+    def to_arrow_batch_reader(self, splits: List[Split]) -> pa.RecordBatchReader:
+        """Read data from splits and converted to pyarrow.RecordBatchReader format."""
+
+    @abstractmethod
+    def to_pandas(self, splits: List[Split]) -> pd.DataFrame:
+        """Read data from splits and converted to pandas.DataFrame format."""

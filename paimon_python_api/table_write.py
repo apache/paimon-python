@@ -16,6 +16,7 @@
 # limitations under the License.
 #################################################################################
 
+import pandas as pd
 import pyarrow as pa
 
 from abc import ABC, abstractmethod
@@ -27,8 +28,16 @@ class BatchTableWrite(ABC):
     """A table write for batch processing. Recommended for one-time committing."""
 
     @abstractmethod
-    def write(self, record_batch: pa.RecordBatch):
-        """ Write a batch to the writer. */"""
+    def write_arrow(self, table: pa.Table):
+        """ Write an arrow table to the writer."""
+
+    @abstractmethod
+    def write_arrow_batch(self, record_batch: pa.RecordBatch):
+        """ Write an arrow record batch to the writer."""
+
+    @abstractmethod
+    def write_pandas(self, dataframe: pd.DataFrame):
+        """ Write a pandas dataframe to the writer."""
 
     @abstractmethod
     def prepare_commit(self) -> List[CommitMessage]:
