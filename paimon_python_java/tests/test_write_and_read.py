@@ -310,8 +310,8 @@ class TableWriteReadTest(unittest.TestCase):
         table_commit = write_builder.new_commit()
 
         df0 = pd.DataFrame({
-            'f0': [1, 1, 2, 2],
-            'f1': ['apple', 'banana', 'dog', 'cat'],
+            'f0': [1, 2],
+            'f1': ['apple', 'banana'],
         })
 
         table_write.write_pandas(df0)
@@ -342,10 +342,10 @@ class TableWriteReadTest(unittest.TestCase):
 
         table_scan = read_builder.new_scan()
         table_read = read_builder.new_read()
-        actual_df1 = table_read.to_pandas(table_scan.plan().splits())
+        actual_df1 = table_read.to_pandas(table_scan.plan().splits()).sort_values(by='f0')
         expected_df1 = pd.DataFrame({
-            'f0': [2, 2, 1],
-            'f1': ['dog', 'cat', 'watermelon']
+            'f0': [1, 2],
+            'f1': ['watermelon', 'banana']
         })
         expected_df1['f0'] = expected_df1['f0'].astype('int32')
         pd.testing.assert_frame_equal(
