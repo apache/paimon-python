@@ -17,7 +17,6 @@
 ################################################################################
 
 import fnmatch
-import io
 import os
 import shutil
 import setup_utils.java_setuputils as java_setuputils
@@ -68,8 +67,8 @@ try:
         'pyarrow>=5.0.0'
     ]
 
-    with io.open('README.md', 'r', encoding='utf-8') as f:
-        long_description = f.read()
+    long_description = 'See Apache Paimon Python API \
+    [Doc](https://paimon.apache.org/docs/master/program-api/python-api/) for usage.'
 
     setup(
         name='paimon_python',
