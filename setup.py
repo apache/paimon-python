@@ -20,6 +20,7 @@ import fnmatch
 import os
 import shutil
 import setup_utils.java_setuputils as java_setuputils
+import setup_utils.version
 
 from setuptools import Command, setup
 
@@ -72,7 +73,7 @@ try:
 
     setup(
         name='paimon_python',
-        version='0.1.0.dev0',
+        version=setup_utils.version.__version__,
         packages=PACKAGES,
         include_package_data=True,
         package_data=PACKAGE_DATA,
