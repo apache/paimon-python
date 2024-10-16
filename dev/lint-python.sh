@@ -571,7 +571,6 @@ function check_stage() {
 #########################
 # Tox check
 function tox_check() {
-    LATEST_PYTHON="py311"
     print_function "STAGE" "tox checks"
     # Set created py-env in $PATH for tox's creating virtual env
     activate
@@ -581,11 +580,11 @@ function tox_check() {
     # tox runs codes in virtual env, set var to avoid error
     export _PYPAIMON_TOX_TEST="true"
 
-    if [[ ${BUILD_REASON} = 'IndividualCI' ]]; then
-        # Only run test in latest python version triggered by a Git push
-        $TOX_PATH -vv -c $PAIMON_PYTHON_DIR/tox.ini -e ${LATEST_PYTHON} --recreate 2>&1 | tee -a $LOG_FILE
+    if [[ -n "$GITHUB_ACTION" ]]; then
+        # Run tests in all versions triggered by a Git push (tests aren't so many currently)
+        $TOX_PATH -vv -c $PAIMON_PYTHON_DIR/tox.ini --recreate 2>&1 | tee -a $LOG_FILE
     else
-        # Only run random selected python version in nightly CI.
+        # Only run random selected python version at local.
         ENV_LIST_STRING=`$TOX_PATH -l -c $PAIMON_PYTHON_DIR/tox.ini`
         _OLD_IFS=$IFS
         IFS=$'\n'
