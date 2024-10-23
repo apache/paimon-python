@@ -39,7 +39,7 @@ public class BytesWriter {
 
     public BytesWriter(TableWrite tableWrite, RowType rowType) {
         this.tableWrite = tableWrite;
-        this.arrowBatchReader = new ArrowBatchReader(rowType);
+        this.arrowBatchReader = new ArrowBatchReader(rowType, true);
         this.allocator = new RootAllocator();
     }
 

@@ -22,8 +22,9 @@ import pyarrow as pa
 from paimon_python_java.java_gateway import get_gateway
 from paimon_python_java.util import java_utils, constants
 from paimon_python_api import (catalog, table, read_builder, table_scan, split, table_read,
-                               write_builder, table_write, commit_message, table_commit, Schema)
-from typing import List, Iterator, Optional
+                               write_builder, table_write, commit_message, table_commit, Schema,
+                               predicate)
+from typing import List, Iterator, Optional, Any
 
 
 class Catalog(catalog.Catalog):
@@ -85,6 +86,10 @@ class ReadBuilder(read_builder.ReadBuilder):
         self._catalog_options = catalog_options
         self._arrow_schema = arrow_schema
 
+    def with_filter(self, predicate: 'Predicate'):
+        self._j_read_builder.withFilter(predicate.to_j_predicate())
+        return self
+
     def with_projection(self, projection: List[List[int]]) -> 'ReadBuilder':
         self._j_read_builder.withProjection(projection)
         return self
@@ -98,8 +103,13 @@ class ReadBuilder(read_builder.ReadBuilder):
         return TableScan(j_table_scan)
 
     def new_read(self) -> 'TableRead':
-        j_table_read = self._j_read_builder.newRead()
+        j_table_read = self._j_read_builder.newRead().executeFilter()
         return TableRead(j_table_read, self._j_row_type, self._catalog_options, self._arrow_schema)
+
+    # TODO: handle projection
+    # temporarily put here
+    def new_predicate_builder(self) -> 'PredicateBuilder':
+        return PredicateBuilder(self._j_row_type)
 
 
 class TableScan(table_scan.TableScan):
@@ -257,3 +267,92 @@ class BatchTableCommit(table_commit.BatchTableCommit):
 
     def close(self):
         self._j_batch_table_commit.close()
+
+
+class Predicate(predicate.Predicate):
+
+    def __init__(self, j_predicate):
+        self._j_predicate = j_predicate
+
+    def to_j_predicate(self):
+        return self._j_predicate
+
+
+class PredicateBuilder(predicate.PredicateBuilder):
+
+    def __init__(self, j_row_type):
+        self._field_names = j_row_type.getFieldNames()
+        self._j_row_type = j_row_type
+        self._j_predicate_builder = get_gateway().jvm.PredicateBuilder(j_row_type)
+
+    def _build(self, method: str, field: str, literals: Optional[List[Any]] = None):
+        error = ValueError(f'The field {field} is not in field list {self._field_names}.')
+        try:
+            index = self._field_names.index(field)
+            if index == -1:
+                raise error
+        except ValueError:
+            raise error
+
+        if literals is None:
+            literals = []
+
+        j_predicate = get_gateway().jvm.PredicationUtil.build(
+            self._j_row_type,
+            self._j_predicate_builder,
+            method,
+            index,
+            literals
+        )
+        return Predicate(j_predicate)
+
+    def equal(self, field: str, literal: Any) -> Predicate:
+        return self._build('equal', field, [literal])
+
+    def not_equal(self, field: str, literal: Any) -> Predicate:
+        return self._build('notEqual', field, [literal])
+
+    def less_than(self, field: str, literal: Any) -> Predicate:
+        return self._build('lessThan', field, [literal])
+
+    def less_or_equal(self, field: str, literal: Any) -> Predicate:
+        return self._build('lessOrEqual', field, [literal])
+
+    def greater_than(self, field: str, literal: Any) -> Predicate:
+        return self._build('greaterThan', field, [literal])
+
+    def greater_or_equal(self, field: str, literal: Any) -> Predicate:
+        return self._build('greaterOrEqual', field, [literal])
+
+    def is_null(self, field: str) -> Predicate:
+        return self._build('isNull', field)
+
+    def is_not_null(self, field: str) -> Predicate:
+        return self._build('isNotNull', field)
+
+    def startswith(self, field: str, pattern_literal: Any) -> Predicate:
+        return self._build('startsWith', field, [pattern_literal])
+
+    def endswith(self, field: str, pattern_literal: Any) -> Predicate:
+        return self._build('endsWith', field, [pattern_literal])
+
+    def contains(self, field: str, pattern_literal: Any) -> Predicate:
+        return self._build('contains', field, [pattern_literal])
+
+    def is_in(self, field: str, literals: List[Any]) -> Predicate:
+        return self._build('in', field, literals)
+
+    def is_not_in(self, field: str, literals: List[Any]) -> Predicate:
+        return self._build('notIn', field, literals)
+
+    def between(self, field: str, included_lower_bound: Any, included_upper_bound: Any) \
+            -> Predicate:
+        return self._build('between', field, [included_lower_bound, included_upper_bound])
+
+    def and_predicates(self, predicates: List[Predicate]) -> Predicate:
+        predicates = list(map(lambda p: p.to_j_predicate(), predicates))
+        return Predicate(get_gateway().jvm.PredicationUtil.buildAnd(predicates))
+
+    def or_predicates(self, predicates: List[Predicate]) -> Predicate:
+        predicates = list(map(lambda p: p.to_j_predicate(), predicates))
+        return Predicate(get_gateway().jvm.PredicationUtil.buildOr(predicates))
