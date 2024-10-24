@@ -20,6 +20,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import random
 import pandas as pd
 import pyarrow as pa
 
@@ -35,6 +36,10 @@ def _check_filtered_result(read_builder, expected_df):
     actual_df = read.to_pandas(scan.plan().splits())
     pd.testing.assert_frame_equal(
         actual_df.reset_index(drop=True), expected_df.reset_index(drop=True))
+
+
+def _random_format():
+    return random.choice(['avro', 'parquet', 'orc'])
 
 
 class PredicateTest(unittest.TestCase):
@@ -53,9 +58,12 @@ class PredicateTest(unittest.TestCase):
             ('f0', pa.int64()),
             ('f1', pa.string()),
         ])
-        catalog.create_table('default.test_append', Schema(pa_schema), False)
+        catalog.create_table('default.test_append',
+                             Schema(pa_schema, options={'file.format': _random_format()}),
+                             False)
         catalog.create_table('default.test_pk',
-                             Schema(pa_schema, primary_keys=['f0'], options={'bucket': '1'}),
+                             Schema(pa_schema, primary_keys=['f0'],
+                                    options={'bucket': '1', 'file.format': _random_format()}),
                              False)
 
         df = pd.DataFrame({
@@ -148,7 +156,9 @@ class PredicateTest(unittest.TestCase):
             # bool
             ('_boolean', pa.bool_())
         ])
-        self.catalog.create_table('default.test_all_field_types', Schema(pa_schema), False)
+        self.catalog.create_table('default.test_all_field_types',
+                                  Schema(pa_schema, options={'file.format': _random_format()}),
+                                  False)
         table = self.catalog.get_table('default.test_all_field_types')
         write_builder = table.new_batch_write_builder()
         write = write_builder.new_write()
