@@ -63,6 +63,7 @@ def launch_gateway_server_process(env):
         *main_args
     ]
 
+    preexec_fn = None
     if not on_windows():
         def preexec_func():
             # ignore ctrl-c / SIGINT
