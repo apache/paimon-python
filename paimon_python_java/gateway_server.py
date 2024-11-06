@@ -103,7 +103,7 @@ def _get_hadoop_classpath(env):
         return env[constants.PYPAIMON_HADOOP_CLASSPATH]
 
     if 'HADOOP_CLASSPATH' in env:
-        return None
+        return env['HADOOP_CLASSPATH']
     else:
         raise EnvironmentError(f"You haven't set '{constants.PYPAIMON_HADOOP_CLASSPATH}', \
  and 'HADOOP_CLASSPATH' is also not set. Ensure one of them is set.")
