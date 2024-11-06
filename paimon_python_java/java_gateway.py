@@ -109,6 +109,7 @@ def import_paimon_view(gateway):
     java_import(gateway.jvm, 'org.apache.paimon.types.*')
     java_import(gateway.jvm, 'org.apache.paimon.python.*')
     java_import(gateway.jvm, "org.apache.paimon.data.*")
+    java_import(gateway.jvm, "org.apache.paimon.predicate.PredicateBuilder")
 
 
 class Watchdog(object):

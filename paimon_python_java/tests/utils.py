@@ -23,6 +23,11 @@ from paimon_python_java.util import constants
 
 
 def setup_hadoop_bundle_jar(hadoop_dir):
+    if constants.PYPAIMON_HADOOP_CLASSPATH in os.environ:
+        file = os.environ[constants.PYPAIMON_HADOOP_CLASSPATH]
+        if os.path.isfile(file):
+            return
+
     url = 'https://repo.maven.apache.org/maven2/org/apache/flink/' \
           'flink-shaded-hadoop-2-uber/2.8.3-10.0/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar'
 

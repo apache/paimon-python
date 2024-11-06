@@ -18,7 +18,8 @@
 
 from .util import constants
 from .pypaimon import (Catalog, Table, ReadBuilder, TableScan, Plan, Split, TableRead,
-                       BatchWriteBuilder, BatchTableWrite, CommitMessage, BatchTableCommit)
+                       BatchWriteBuilder, BatchTableWrite, CommitMessage, BatchTableCommit,
+                       Predicate, PredicateBuilder)
 
 __all__ = [
     'constants',
@@ -32,5 +33,7 @@ __all__ = [
     'BatchWriteBuilder',
     'BatchTableWrite',
     'CommitMessage',
-    'BatchTableCommit'
+    'BatchTableCommit',
+    'Predicate',
+    'PredicateBuilder'
 ]
