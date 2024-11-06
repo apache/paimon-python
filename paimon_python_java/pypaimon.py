@@ -106,8 +106,6 @@ class ReadBuilder(read_builder.ReadBuilder):
         j_table_read = self._j_read_builder.newRead().executeFilter()
         return TableRead(j_table_read, self._j_row_type, self._catalog_options, self._arrow_schema)
 
-    # TODO: handle projection
-    # temporarily put here
     def new_predicate_builder(self) -> 'PredicateBuilder':
         return PredicateBuilder(self._j_row_type)
 
