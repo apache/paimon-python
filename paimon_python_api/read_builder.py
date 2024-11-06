@@ -17,12 +17,19 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from paimon_python_api import TableRead, TableScan
+from paimon_python_api import TableRead, TableScan, Predicate, PredicateBuilder
 from typing import List
 
 
 class ReadBuilder(ABC):
     """An interface for building the TableScan and TableRead."""
+
+    @abstractmethod
+    def with_filter(self, predicate: Predicate):
+        """
+        Push filters, will filter the data as much as possible,
+        but it is not guaranteed that it is a complete filter.
+        """
 
     @abstractmethod
     def with_projection(self, projection: List[List[int]]) -> 'ReadBuilder':
@@ -39,3 +46,7 @@ class ReadBuilder(ABC):
     @abstractmethod
     def new_read(self) -> TableRead:
         """Create a TableRead to read splits."""
+
+    @abstractmethod
+    def new_predicate_builder(self) -> PredicateBuilder:
+        """Create a builder for Predicate."""

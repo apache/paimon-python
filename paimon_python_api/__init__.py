@@ -19,6 +19,7 @@
 from .split import Split
 from .table_read import TableRead
 from .table_scan import TableScan, Plan
+from .predicate import Predicate, PredicateBuilder
 from .read_builder import ReadBuilder
 from .commit_message import CommitMessage
 from .table_commit import BatchTableCommit
@@ -39,5 +40,7 @@ __all__ = [
     'BatchWriteBuilder',
     'Table',
     'Schema',
-    'Catalog'
+    'Catalog',
+    'Predicate',
+    'PredicateBuilder'
 ]
