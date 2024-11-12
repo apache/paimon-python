@@ -89,7 +89,8 @@ public class BytesWriter {
             Field actualField = actualFields.get(i);
             // ArrowType doesn't have nullability (similar to DataTypeRoot)
             if (!actualField.getType().equals(expectedField.getType())
-                    || !checkSchema(expectedField.getChildren(), actualField.getChildren())) {
+                    || !checkTypesIgnoreNullability(
+                            expectedField.getChildren(), actualField.getChildren())) {
                 return false;
             }
         }
