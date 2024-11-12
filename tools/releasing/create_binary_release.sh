@@ -61,9 +61,12 @@ source dev/.conda/bin/activate
 dev/build-wheels.sh
 
 WHEEL_FILE_NAME="paimon_python-${RELEASE_VERSION}-py3-none-any.whl"
-WHEEL_FILE="${RELEASE_DIR}/${WHEEL_FILE_NAME}"
-cp "dist/${WHEEL_FILE_NAME}" ${WHEEL_FILE}
+cp "dist/${WHEEL_FILE_NAME}" "${RELEASE_DIR}/${WHEEL_FILE_NAME}"
+
+cd ${RELEASE_DIR}
 
 # Sign sha the wheel package
-gpg --armor --detach-sig ${WHEEL_FILE}
-$SHASUM ${WHEEL_FILE} > "${WHEEL_FILE}.sha512"
+gpg --armor --detach-sig ${WHEEL_FILE_NAME}
+$SHASUM ${WHEEL_FILE_NAME} > "${WHEEL_FILE_NAME}.sha512"
+
+cd ${CURR_DIR}
