@@ -18,6 +18,7 @@
 
 package org.apache.paimon.python;
 
+import org.apache.paimon.arrow.ArrowUtils;
 import org.apache.paimon.arrow.reader.ArrowBatchReader;
 import org.apache.paimon.data.InternalRow;
 import org.apache.paimon.table.sink.TableWrite;
@@ -27,8 +28,11 @@ import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.ipc.ArrowStreamReader;
+import org.apache.arrow.vector.types.pojo.Field;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /** Write Arrow bytes to Paimon. */
 public class BytesWriter {
@@ -36,17 +40,30 @@ public class BytesWriter {
     private final TableWrite tableWrite;
     private final ArrowBatchReader arrowBatchReader;
     private final BufferAllocator allocator;
+    private final List<Field> arrowFields;
 
     public BytesWriter(TableWrite tableWrite, RowType rowType) {
         this.tableWrite = tableWrite;
         this.arrowBatchReader = new ArrowBatchReader(rowType);
         this.allocator = new RootAllocator();
+        arrowFields =
+                rowType.getFields().stream()
+                        .map(f -> ArrowUtils.toArrowField(f.name(), f.type()))
+                        .collect(Collectors.toList());
     }
 
     public void write(byte[] bytes) throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         ArrowStreamReader arrowStreamReader = new ArrowStreamReader(bais, allocator);
         VectorSchemaRoot vsr = arrowStreamReader.getVectorSchemaRoot();
+        if (!checkTypesIgnoreNullability(arrowFields, vsr.getSchema().getFields())) {
+            throw new RuntimeException(
+                    String.format(
+                            "Input schema isn't consistent with table schema.\n"
+                                    + "\tTable schema is: %s\n"
+                                    + "\tInput schema is: %s",
+                            arrowFields, vsr.getSchema().getFields()));
+        }
 
         while (arrowStreamReader.loadNextBatch()) {
             Iterable<InternalRow> rows = arrowBatchReader.readBatch(vsr);
@@ -59,5 +76,25 @@ public class BytesWriter {
 
     public void close() {
         allocator.close();
+    }
+
+    private boolean checkTypesIgnoreNullability(
+            List<Field> expectedFields, List<Field> actualFields) {
+        if (expectedFields.size() != actualFields.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < expectedFields.size(); i++) {
+            Field expectedField = expectedFields.get(i);
+            Field actualField = actualFields.get(i);
+            // ArrowType doesn't have nullability (similar to DataTypeRoot)
+            if (!actualField.getType().equals(expectedField.getType())
+                    || !checkTypesIgnoreNullability(
+                            expectedField.getChildren(), actualField.getChildren())) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

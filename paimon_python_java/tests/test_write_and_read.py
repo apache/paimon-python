@@ -22,6 +22,7 @@ import tempfile
 import unittest
 import pandas as pd
 import pyarrow as pa
+from py4j.protocol import Py4JJavaError
 
 from paimon_python_api import Schema
 from paimon_python_java import Catalog
@@ -371,3 +372,76 @@ class TableWriteReadTest(unittest.TestCase):
         df2['f0'] = df2['f0'].astype('int32')
         pd.testing.assert_frame_equal(
             actual_df2.reset_index(drop=True), df2.reset_index(drop=True))
+
+    def testWriteWrongSchema(self):
+        schema = Schema(self.simple_pa_schema)
+        self.catalog.create_table('default.test_wrong_schema', schema, False)
+        table = self.catalog.get_table('default.test_wrong_schema')
+
+        data = {
+            'f0': [1, 2, 3],
+            'f1': ['a', 'b', 'c'],
+        }
+        df = pd.DataFrame(data)
+        schema = pa.schema([
+            ('f0', pa.int64()),
+            ('f1', pa.string())
+        ])
+        record_batch = pa.RecordBatch.from_pandas(df, schema)
+
+        write_builder = table.new_batch_write_builder()
+        table_write = write_builder.new_write()
+
+        with self.assertRaises(Py4JJavaError) as e:
+            table_write.write_arrow_batch(record_batch)
+        self.assertEqual(
+            str(e.exception.java_exception),
+            '''java.lang.RuntimeException: Input schema isn't consistent with table schema.
+\tTable schema is: [f0: Int(32, true), f1: Utf8]
+\tInput schema is: [f0: Int(64, true), f1: Utf8]''')
+
+    def testIgnoreNullable(self):
+        pa_schema1 = pa.schema([
+            ('f0', pa.int32(), False),
+            ('f1', pa.string())
+        ])
+
+        pa_schema2 = pa.schema([
+            ('f0', pa.int32()),
+            ('f1', pa.string())
+        ])
+
+        # write nullable to non-null
+        self._testIgnoreNullableImpl('test_ignore_nullable1', pa_schema1, pa_schema2)
+
+        # write non-null to nullable
+        self._testIgnoreNullableImpl('test_ignore_nullable2', pa_schema2, pa_schema1)
+
+    def _testIgnoreNullableImpl(self, table_name, table_schema, data_schema):
+        schema = Schema(table_schema)
+        self.catalog.create_table(f'default.{table_name}', schema, False)
+        table = self.catalog.get_table(f'default.{table_name}')
+
+        data = {
+            'f0': [1, 2, 3],
+            'f1': ['a', 'b', 'c'],
+        }
+        df = pd.DataFrame(data)
+        record_batch = pa.RecordBatch.from_pandas(pd.DataFrame(data), data_schema)
+
+        write_builder = table.new_batch_write_builder()
+        table_write = write_builder.new_write()
+        table_commit = write_builder.new_commit()
+        table_write.write_arrow_batch(record_batch)
+        table_commit.commit(table_write.prepare_commit())
+
+        table_write.close()
+        table_commit.close()
+
+        read_builder = table.new_read_builder()
+        table_scan = read_builder.new_scan()
+        table_read = read_builder.new_read()
+        actual_df = table_read.to_pandas(table_scan.plan().splits())
+        df['f0'] = df['f0'].astype('int32')
+        pd.testing.assert_frame_equal(
+            actual_df.reset_index(drop=True), df.reset_index(drop=True))

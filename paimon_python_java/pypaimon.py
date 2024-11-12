@@ -218,23 +218,22 @@ class BatchTableWrite(table_write.BatchTableWrite):
 
     def write_arrow(self, table):
         for record_batch in table.to_reader():
-            # TODO: can we use a reusable stream?
-            stream = pa.BufferOutputStream()
-            with pa.RecordBatchStreamWriter(stream, self._arrow_schema) as writer:
-                writer.write(record_batch)
-            arrow_bytes = stream.getvalue().to_pybytes()
-            self._j_bytes_writer.write(arrow_bytes)
+            # TODO: can we use a reusable stream in #_write_arrow_batch ?
+            self._write_arrow_batch(record_batch)
 
     def write_arrow_batch(self, record_batch):
-        stream = pa.BufferOutputStream()
-        with pa.RecordBatchStreamWriter(stream, self._arrow_schema) as writer:
-            writer.write(record_batch)
-        arrow_bytes = stream.getvalue().to_pybytes()
-        self._j_bytes_writer.write(arrow_bytes)
+        self._write_arrow_batch(record_batch)
 
     def write_pandas(self, dataframe: pd.DataFrame):
         record_batch = pa.RecordBatch.from_pandas(dataframe, schema=self._arrow_schema)
-        self.write_arrow_batch(record_batch)
+        self._write_arrow_batch(record_batch)
+
+    def _write_arrow_batch(self, record_batch):
+        stream = pa.BufferOutputStream()
+        with pa.RecordBatchStreamWriter(stream, record_batch.schema) as writer:
+            writer.write(record_batch)
+        arrow_bytes = stream.getvalue().to_pybytes()
+        self._j_bytes_writer.write(arrow_bytes)
 
     def prepare_commit(self) -> List['CommitMessage']:
         j_commit_messages = self._j_batch_table_write.prepareCommit()
