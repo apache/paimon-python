@@ -87,7 +87,7 @@ public class BytesWriter {
         for (int i = 0; i < expectedFields.size(); i++) {
             Field expectedField = expectedFields.get(i);
             Field actualField = actualFields.get(i);
-            if (!checkField(expectedField, actualField)
+            if (!checkFieldIgnoreNullability(expectedField, actualField)
                     || !checkSchema(expectedField.getChildren(), actualField.getChildren())) {
                 return false;
             }
@@ -96,7 +96,7 @@ public class BytesWriter {
         return true;
     }
 
-    private boolean checkField(Field expected, Field actual) {
+    private boolean checkFieldIgnoreNullability(Field expected, Field actual) {
         return Objects.equals(expected.getName(), actual.getName())
                 && Objects.equals(expected.getType(), actual.getType());
     }
