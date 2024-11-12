@@ -32,7 +32,6 @@ import org.apache.arrow.vector.types.pojo.Field;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /** Write Arrow bytes to Paimon. */
@@ -53,11 +52,11 @@ public class BytesWriter {
                         .collect(Collectors.toList());
     }
 
-    public void write(byte[] bytes, boolean needCheckSchema) throws Exception {
+    public void write(byte[] bytes) throws Exception {
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         ArrowStreamReader arrowStreamReader = new ArrowStreamReader(bais, allocator);
         VectorSchemaRoot vsr = arrowStreamReader.getVectorSchemaRoot();
-        if (needCheckSchema && !checkSchema(arrowFields, vsr.getSchema().getFields())) {
+        if (!checkTypesIgnoreNullability(arrowFields, vsr.getSchema().getFields())) {
             throw new RuntimeException(
                     String.format(
                             "Input schema isn't consistent with table schema.\n"
@@ -79,7 +78,8 @@ public class BytesWriter {
         allocator.close();
     }
 
-    private boolean checkSchema(List<Field> expectedFields, List<Field> actualFields) {
+    private boolean checkTypesIgnoreNullability(
+            List<Field> expectedFields, List<Field> actualFields) {
         if (expectedFields.size() != actualFields.size()) {
             return false;
         }
@@ -87,17 +87,13 @@ public class BytesWriter {
         for (int i = 0; i < expectedFields.size(); i++) {
             Field expectedField = expectedFields.get(i);
             Field actualField = actualFields.get(i);
-            if (!checkFieldIgnoreNullability(expectedField, actualField)
+            // ArrowType doesn't have nullability (similar to DataTypeRoot)
+            if (!actualField.getType().equals(expectedField.getType())
                     || !checkSchema(expectedField.getChildren(), actualField.getChildren())) {
                 return false;
             }
         }
 
         return true;
-    }
-
-    private boolean checkFieldIgnoreNullability(Field expected, Field actual) {
-        return Objects.equals(expected.getName(), actual.getName())
-                && Objects.equals(expected.getType(), actual.getType());
     }
 }
