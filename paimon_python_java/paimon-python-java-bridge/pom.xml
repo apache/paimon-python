@@ -38,6 +38,7 @@
         <spotless.delimiter>package</spotless.delimiter>
         <arrow.version>14.0.0</arrow.version>
         <target.java.version>1.8</target.java.version>
+        <paimon.ci.tools.version>0.9.0</paimon.ci.tools.version>
     </properties>
 
     <dependencies>
@@ -243,7 +244,7 @@
                         <dependency>
                             <groupId>org.apache.paimon</groupId>
                             <artifactId>paimon-ci-tools</artifactId>
-                            <version>${project.version}</version>
+                            <version>${paimon.ci.tools.version}</version>
                         </dependency>
                     </dependencies>
                 </plugin>

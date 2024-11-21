@@ -44,8 +44,6 @@ jobs:
           mvn clean deploy ${{ env.MVN_COMMON_OPTIONS }} -DskipTests \
             -DaltDeploymentRepository=validation_repository::default::file:${{ env.MVN_VALIDATION_DIR }} \
             | tee ${{ env.MVN_BUILD_OUTPUT_FILE }}
-          cd tools/ci/paimon-ci-tools
-          mvn clean install -DskipTests
 
       - name: Check licensing
         run: |
