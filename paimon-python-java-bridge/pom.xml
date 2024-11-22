@@ -23,7 +23,7 @@
 
     <groupId>org.apache.paimon</groupId>
     <artifactId>paimon-python-java-bridge</artifactId>
-    <version>0.9-SNAPSHOT</version>
+    <version>0.9.0</version>
     <name>Paimon : Python-Java Bridge</name>
 
     <packaging>jar</packaging>
