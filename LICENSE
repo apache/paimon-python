@@ -199,3 +199,23 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+------------------------------------------------------------------------------------
+
+This product bundles various third-party components under other open source licenses.
+This section summarizes those components and their licenses. See licenses/
+for text of these licenses.
+
+Apache Software Foundation License 2.0
+--------------------------------------
+
+paimon_python_java/paimon-python-java-bridge/src/main/java/org/apache/paimon/python/FileLock.java
+paimon_python_java/paimon-python-java-bridge/src/main/java/org/apache/paimon/python/NetUtils
+paimon_python_java/paimon-python-java-bridge/src/main/java/org/apache/paimon/python/PythonEnvUtils
+paimon_python_java/paimon-python-java-bridge/src/main/java/org/apache/paimon/python/PythonGatewayServer
+
+paimon_python_java/gateway_server.py
+paimon_python_java/java_gateway.py
+paimon_python_java/util/exceptions.py
+
+from http://flink.apache.org/ version 1.20.0
