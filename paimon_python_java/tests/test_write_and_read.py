@@ -445,3 +445,65 @@ class TableWriteReadTest(unittest.TestCase):
         df['f0'] = df['f0'].astype('int32')
         pd.testing.assert_frame_equal(
             actual_df.reset_index(drop=True), df.reset_index(drop=True))
+
+    def testProjection(self):
+        pa_schema = pa.schema([
+            ('f0', pa.int64()),
+            ('f1', pa.string()),
+            ('f2', pa.bool_()),
+            ('f3', pa.string())
+        ])
+        schema = Schema(pa_schema)
+        self.catalog.create_table('default.test_projection', schema, False)
+        table = self.catalog.get_table('default.test_projection')
+
+        # prepare data
+        data = {
+            'f0': [1, 2, 3],
+            'f1': ['a', 'b', 'c'],
+            'f2': [True, True, False],
+            'f3': ['A', 'B', 'C']
+        }
+        df = pd.DataFrame(data)
+
+        # write and commit data
+        write_builder = table.new_batch_write_builder()
+        table_write = write_builder.new_write()
+        table_commit = write_builder.new_commit()
+
+        table_write.write_pandas(df)
+        commit_messages = table_write.prepare_commit()
+        table_commit.commit(commit_messages)
+
+        table_write.close()
+        table_commit.close()
+
+        # case 1: read empty
+        read_builder = table.new_read_builder().with_projection([])
+        table_scan = read_builder.new_scan()
+        table_read = read_builder.new_read()
+        splits = table_scan.plan().splits()
+        result1 = table_read.to_pandas(splits)
+        self.assertTrue(result1.empty)
+
+        # case 2: read fully
+        read_builder = table.new_read_builder().with_projection(['f0', 'f1', 'f2', 'f3'])
+        table_scan = read_builder.new_scan()
+        table_read = read_builder.new_read()
+        splits = table_scan.plan().splits()
+        result2 = table_read.to_pandas(splits)
+        pd.testing.assert_frame_equal(
+            result2.reset_index(drop=True), df.reset_index(drop=True))
+
+        # case 3: read partially
+        read_builder = table.new_read_builder().with_projection(['f3', 'f2'])
+        table_scan = read_builder.new_scan()
+        table_read = read_builder.new_read()
+        splits = table_scan.plan().splits()
+        result3 = table_read.to_pandas(splits)
+        expected_df = pd.DataFrame({
+            'f3': ['A', 'B', 'C'],
+            'f2': [True, True, False]
+        })
+        pd.testing.assert_frame_equal(
+            result3.reset_index(drop=True), expected_df.reset_index(drop=True))

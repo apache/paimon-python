@@ -91,3 +91,12 @@ def _to_j_type(name, pa_type):
         return jvm.DataTypes.STRING()
     else:
         raise ValueError(f'Found unsupported data type {str(pa_type)} for field {name}.')
+
+
+def to_arrow_schema(j_row_type):
+    # init arrow schema
+    schema_bytes = get_gateway().jvm.SchemaUtil.getArrowSchema(j_row_type)
+    schema_reader = pa.RecordBatchStreamReader(pa.BufferReader(schema_bytes))
+    arrow_schema = schema_reader.schema
+    schema_reader.close()
+    return arrow_schema

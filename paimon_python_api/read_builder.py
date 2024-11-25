@@ -32,7 +32,7 @@ class ReadBuilder(ABC):
         """
 
     @abstractmethod
-    def with_projection(self, projection: List[List[int]]) -> 'ReadBuilder':
+    def with_projection(self, projection: List[str]) -> 'ReadBuilder':
         """Push nested projection."""
 
     @abstractmethod
