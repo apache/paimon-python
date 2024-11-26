@@ -28,7 +28,8 @@ from pypaimon import Schema
 from pypaimon.py4j import Catalog
 from pypaimon.py4j.java_gateway import get_gateway
 from pypaimon.py4j.tests import utils
-from pypaimon.py4j.util import java_utils, java_setuputils
+from pypaimon.py4j.util import java_utils
+from setup_utils import java_setuputils
 
 
 class TableWriteReadTest(unittest.TestCase):

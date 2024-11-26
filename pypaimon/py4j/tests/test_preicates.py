@@ -27,7 +27,7 @@ import pyarrow as pa
 from pypaimon import Schema
 from pypaimon.py4j import Catalog
 from pypaimon.py4j.tests import utils
-from pypaimon.py4j.util import java_setuputils
+from setup_utils import java_setuputils
 
 
 def _check_filtered_result(read_builder, expected_df):
