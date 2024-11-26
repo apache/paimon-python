@@ -60,7 +60,7 @@ source dev/.conda/bin/activate
 # build
 dev/build-wheels.sh
 
-WHEEL_FILE_NAME="paimon_python-${RELEASE_VERSION}-py3-none-any.whl"
+WHEEL_FILE_NAME="pypaimon-${RELEASE_VERSION}-py3-none-any.whl"
 cp "dist/${WHEEL_FILE_NAME}" "${RELEASE_DIR}/${WHEEL_FILE_NAME}"
 
 cd ${RELEASE_DIR}

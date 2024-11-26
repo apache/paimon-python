@@ -18,7 +18,4 @@
 
 from .api import Schema
 
-__all__ = [
-    'Schema',
-
-]
+__all__ = ['Schema']
