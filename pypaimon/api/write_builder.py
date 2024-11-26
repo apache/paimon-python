@@ -17,21 +17,24 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from typing import List
-from paimon_python_api import Split
+from pypaimon.api import BatchTableCommit, BatchTableWrite
+from typing import Optional
 
 
-class TableScan(ABC):
-    """A scan of Table to generate splits."""
-
-    @abstractmethod
-    def plan(self) -> 'Plan':
-        """Plan splits."""
-
-
-class Plan(ABC):
-    """Plan of scan."""
+class BatchWriteBuilder(ABC):
+    """An interface for building the TableScan and TableRead."""
 
     @abstractmethod
-    def splits(self) -> List[Split]:
-        """Return the splits."""
+    def overwrite(self, static_partition: Optional[dict] = None) -> 'BatchWriteBuilder':
+        """
+        Overwrite writing, same as the 'INSERT OVERWRITE T PARTITION (...)' semantics of SQL.
+        If you pass None, it means OVERWRITE whole table.
+        """
+
+    @abstractmethod
+    def new_write(self) -> BatchTableWrite:
+        """Create a BatchTableWrite to perform batch writing."""
+
+    @abstractmethod
+    def new_commit(self) -> BatchTableCommit:
+        """Create a BatchTableCommit to perform batch commiting."""

@@ -18,8 +18,8 @@
 
 import pyarrow as pa
 
-from paimon_python_api import Schema
-from paimon_python_java.java_gateway import get_gateway
+from pypaimon import Schema
+from pypaimon.py4j.java_gateway import get_gateway
 
 
 def to_j_catalog_context(catalog_options: dict):

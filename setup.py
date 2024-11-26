@@ -50,13 +50,14 @@ class CleanCommand(Command):
 
 try:
     PACKAGES = [
-        'paimon_python_api',
-        'paimon_python_java',
-        'paimon_python_java.util'
+        'pypaimon',
+        'pypaimon.api',
+        'pypaimon.py4j',
+        'pypaimon.py4j.util'
     ]
 
     PACKAGE_DATA = {
-        'paimon_python_java': java_setuputils.get_package_data()
+        'pypaimon.py4j': java_setuputils.get_package_data()
     }
 
     install_requires = [
@@ -72,7 +73,7 @@ try:
     [Doc](https://paimon.apache.org/docs/master/program-api/python-api/) for usage.'
 
     setup(
-        name='paimon_python',
+        name='pypaimon',
         version=setup_utils.version.__version__,
         packages=PACKAGES,
         include_package_data=True,

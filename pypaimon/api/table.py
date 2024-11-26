@@ -16,30 +16,36 @@
 # limitations under the License.
 #################################################################################
 
+import pyarrow as pa
+
 from abc import ABC, abstractmethod
-from typing import Optional
-from paimon_python_api import Table, Schema
+from pypaimon.api import ReadBuilder, BatchWriteBuilder
+from typing import Optional, List
 
 
-class Catalog(ABC):
-    """
-    This interface is responsible for reading and writing
-    metadata such as database/table from a paimon catalog.
-    """
-
-    @staticmethod
-    @abstractmethod
-    def create(catalog_options: dict) -> 'Catalog':
-        """Create catalog from configuration."""
+class Table(ABC):
+    """A table provides basic abstraction for table read and write."""
 
     @abstractmethod
-    def get_table(self, identifier: str) -> Table:
-        """Get paimon table identified by the given Identifier."""
+    def new_read_builder(self) -> ReadBuilder:
+        """Return a builder for building table scan and table read."""
 
     @abstractmethod
-    def create_database(self, name: str, ignore_if_exists: bool, properties: Optional[dict] = None):
-        """Create a database with properties."""
+    def new_batch_write_builder(self) -> BatchWriteBuilder:
+        """Returns a builder for building batch table write and table commit."""
 
-    @abstractmethod
-    def create_table(self, identifier: str, schema: Schema, ignore_if_exists: bool):
-        """Create table."""
+
+class Schema:
+    """Schema of a table."""
+
+    def __init__(self,
+                 pa_schema: pa.Schema,
+                 partition_keys: Optional[List[str]] = None,
+                 primary_keys: Optional[List[str]] = None,
+                 options: Optional[dict] = None,
+                 comment: Optional[str] = None):
+        self.pa_schema = pa_schema
+        self.partition_keys = partition_keys
+        self.primary_keys = primary_keys
+        self.options = options
+        self.comment = comment

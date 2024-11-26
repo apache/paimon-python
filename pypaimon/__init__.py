@@ -14,29 +14,8 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 # limitations under the License.
-################################################################################
+#################################################################################
 
-import os
-import urllib.request
+from .api import Schema
 
-from paimon_python_java.util import constants
-
-
-def setup_hadoop_bundle_jar(hadoop_dir):
-    if constants.PYPAIMON_HADOOP_CLASSPATH in os.environ:
-        file = os.environ[constants.PYPAIMON_HADOOP_CLASSPATH]
-        if os.path.isfile(file):
-            return
-
-    url = 'https://repo.maven.apache.org/maven2/org/apache/flink/' \
-          'flink-shaded-hadoop-2-uber/2.8.3-10.0/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar'
-
-    response = urllib.request.urlopen(url)
-    if not os.path.exists(hadoop_dir):
-        os.mkdir(hadoop_dir)
-
-    jar_path = os.path.join(hadoop_dir, "bundled-hadoop.jar")
-    with open(jar_path, 'wb') as file:
-        file.write(response.read())
-
-    os.environ[constants.PYPAIMON_HADOOP_CLASSPATH] = jar_path
+__all__ = ['Schema']

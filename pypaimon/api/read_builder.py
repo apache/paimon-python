@@ -17,7 +17,7 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from paimon_python_api import TableRead, TableScan, Predicate, PredicateBuilder
+from pypaimon.api import TableRead, TableScan, Predicate, PredicateBuilder
 from typing import List
 
 

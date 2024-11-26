@@ -22,7 +22,7 @@ import platform
 import signal
 
 from subprocess import Popen, PIPE
-from paimon_python_java import constants
+from pypaimon.py4j import constants
 
 
 def on_windows():
@@ -74,7 +74,7 @@ def launch_gateway_server_process(env):
                  stdin=PIPE, stderr=PIPE, preexec_fn=preexec_fn, env=env)
 
 
-_JAVA_IMPL_MODULE = 'paimon_python_java'
+_JAVA_IMPL_MODULE = 'pypaimon.py4j'
 _JAVA_DEPS = 'java_dependencies'
 _JAVA_BRIDGE = 'paimon-python-java-bridge'
 

@@ -14,27 +14,29 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 # limitations under the License.
-#################################################################################
+################################################################################
 
-from abc import ABC, abstractmethod
-from paimon_python_api import BatchTableCommit, BatchTableWrite
-from typing import Optional
+import os
+import urllib.request
+
+from pypaimon.py4j import constants
 
 
-class BatchWriteBuilder(ABC):
-    """An interface for building the TableScan and TableRead."""
+def setup_hadoop_bundle_jar(hadoop_dir):
+    if constants.PYPAIMON_HADOOP_CLASSPATH in os.environ:
+        file = os.environ[constants.PYPAIMON_HADOOP_CLASSPATH]
+        if os.path.isfile(file):
+            return
 
-    @abstractmethod
-    def overwrite(self, static_partition: Optional[dict] = None) -> 'BatchWriteBuilder':
-        """
-        Overwrite writing, same as the 'INSERT OVERWRITE T PARTITION (...)' semantics of SQL.
-        If you pass None, it means OVERWRITE whole table.
-        """
+    url = 'https://repo.maven.apache.org/maven2/org/apache/flink/' \
+          'flink-shaded-hadoop-2-uber/2.8.3-10.0/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar'
 
-    @abstractmethod
-    def new_write(self) -> BatchTableWrite:
-        """Create a BatchTableWrite to perform batch writing."""
+    response = urllib.request.urlopen(url)
+    if not os.path.exists(hadoop_dir):
+        os.mkdir(hadoop_dir)
 
-    @abstractmethod
-    def new_commit(self) -> BatchTableCommit:
-        """Create a BatchTableCommit to perform batch commiting."""
+    jar_path = os.path.join(hadoop_dir, "bundled-hadoop.jar")
+    with open(jar_path, 'wb') as file:
+        file.write(response.read())
+
+    os.environ[constants.PYPAIMON_HADOOP_CLASSPATH] = jar_path

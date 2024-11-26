@@ -26,9 +26,9 @@ from py4j.java_gateway import (java_import, logger, JavaGateway, GatewayParamete
                                CallbackServerParameters)
 from threading import RLock
 
-from paimon_python_java.gateway_server import launch_gateway_server_process
-from paimon_python_java import constants
-from paimon_python_java.util.exceptions import install_py4j_hooks
+from pypaimon.py4j.gateway_server import launch_gateway_server_process
+from pypaimon.py4j import constants
+from pypaimon.py4j.util.exceptions import install_py4j_hooks
 
 _gateway = None
 _lock = RLock()

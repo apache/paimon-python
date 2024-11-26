@@ -14,26 +14,24 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 # limitations under the License.
-################################################################################
+#################################################################################
 
-from .util import constants
-from .pypaimon import (Catalog, Table, ReadBuilder, TableScan, Plan, Split, TableRead,
-                       BatchWriteBuilder, BatchTableWrite, CommitMessage, BatchTableCommit,
-                       Predicate, PredicateBuilder)
+from abc import ABC, abstractmethod
+from typing import List
+from pypaimon.api import Split
 
-__all__ = [
-    'constants',
-    'Catalog',
-    'Table',
-    'ReadBuilder',
-    'TableScan',
-    'Plan',
-    'Split',
-    'TableRead',
-    'BatchWriteBuilder',
-    'BatchTableWrite',
-    'CommitMessage',
-    'BatchTableCommit',
-    'Predicate',
-    'PredicateBuilder'
-]
+
+class TableScan(ABC):
+    """A scan of Table to generate splits."""
+
+    @abstractmethod
+    def plan(self) -> 'Plan':
+        """Plan splits."""
+
+
+class Plan(ABC):
+    """Plan of scan."""
+
+    @abstractmethod
+    def splits(self) -> List[Split]:
+        """Return the splits."""

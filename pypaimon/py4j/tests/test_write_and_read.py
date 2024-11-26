@@ -24,11 +24,11 @@ import pandas as pd
 import pyarrow as pa
 from py4j.protocol import Py4JJavaError
 
-from paimon_python_api import Schema
-from paimon_python_java import Catalog
-from paimon_python_java.java_gateway import get_gateway
-from paimon_python_java.tests import utils
-from paimon_python_java.util import java_utils
+from pypaimon import Schema
+from pypaimon.py4j import Catalog
+from pypaimon.py4j.java_gateway import get_gateway
+from pypaimon.py4j.tests import utils
+from pypaimon.py4j.util import java_utils
 from setup_utils import java_setuputils
 
 
