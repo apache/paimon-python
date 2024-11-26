@@ -16,9 +16,12 @@
 # limitations under the License.
 ################################################################################
 
+import duckdb
 import pandas as pd
 import pyarrow as pa
+import ray
 
+from duckdb.duckdb import DuckDBPyConnection
 from paimon_python_java.java_gateway import get_gateway
 from paimon_python_java.util import java_utils, constants
 from paimon_python_api import (catalog, table, read_builder, table_scan, split, table_read,
@@ -160,6 +163,18 @@ class TableRead(table_read.TableRead):
 
     def to_pandas(self, splits: List[Split]) -> pd.DataFrame:
         return self.to_arrow(splits).to_pandas()
+
+    def to_duckdb(
+            self,
+            splits: List[Split],
+            table_name: str,
+            connection: Optional[DuckDBPyConnection] = None) -> DuckDBPyConnection:
+        con = connection or duckdb.connect(database=":memory:")
+        con.register(table_name, self.to_arrow(splits))
+        return con
+
+    def to_ray(self, splits: List[Split]) -> ray.data.dataset.Dataset:
+        return ray.data.from_arrow(self.to_arrow(splits))
 
     def _init(self):
         if self._j_bytes_reader is None:
