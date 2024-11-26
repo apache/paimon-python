@@ -17,24 +17,36 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from paimon_python_api import BatchTableCommit, BatchTableWrite
-from typing import Optional
+from pypaimon.api import TableRead, TableScan, Predicate, PredicateBuilder
+from typing import List
 
 
-class BatchWriteBuilder(ABC):
+class ReadBuilder(ABC):
     """An interface for building the TableScan and TableRead."""
 
     @abstractmethod
-    def overwrite(self, static_partition: Optional[dict] = None) -> 'BatchWriteBuilder':
+    def with_filter(self, predicate: Predicate):
         """
-        Overwrite writing, same as the 'INSERT OVERWRITE T PARTITION (...)' semantics of SQL.
-        If you pass None, it means OVERWRITE whole table.
+        Push filters, will filter the data as much as possible,
+        but it is not guaranteed that it is a complete filter.
         """
 
     @abstractmethod
-    def new_write(self) -> BatchTableWrite:
-        """Create a BatchTableWrite to perform batch writing."""
+    def with_projection(self, projection: List[str]) -> 'ReadBuilder':
+        """Push nested projection."""
 
     @abstractmethod
-    def new_commit(self) -> BatchTableCommit:
-        """Create a BatchTableCommit to perform batch commiting."""
+    def with_limit(self, limit: int) -> 'ReadBuilder':
+        """Push row number."""
+
+    @abstractmethod
+    def new_scan(self) -> TableScan:
+        """Create a TableScan to perform batch planning."""
+
+    @abstractmethod
+    def new_read(self) -> TableRead:
+        """Create a TableRead to read splits."""
+
+    @abstractmethod
+    def new_predicate_builder(self) -> PredicateBuilder:
+        """Create a builder for Predicate."""

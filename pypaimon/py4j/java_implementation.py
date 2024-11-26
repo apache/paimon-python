@@ -16,17 +16,20 @@
 # limitations under the License.
 ################################################################################
 
+# pypaimon.api implementation based on Java code & py4j lib
+
 import duckdb
 import pandas as pd
 import pyarrow as pa
 import ray
 
 from duckdb.duckdb import DuckDBPyConnection
-from paimon_python_java.java_gateway import get_gateway
-from paimon_python_java.util import java_utils, constants
-from paimon_python_api import (catalog, table, read_builder, table_scan, split, table_read,
-                               write_builder, table_write, commit_message, table_commit, Schema,
-                               predicate)
+from pypaimon.py4j.java_gateway import get_gateway
+from pypaimon.py4j.util import java_utils, constants
+from pypaimon.api import \
+    (catalog, table, read_builder, table_scan, split,
+     table_read, write_builder, table_write, commit_message,
+     table_commit, Schema, predicate)
 from typing import List, Iterator, Optional, Any
 
 

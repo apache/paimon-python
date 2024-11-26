@@ -20,7 +20,7 @@ import pandas as pd
 import pyarrow as pa
 
 from abc import ABC, abstractmethod
-from paimon_python_api import CommitMessage
+from pypaimon.api import CommitMessage
 from typing import List
 
 

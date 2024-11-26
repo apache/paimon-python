@@ -14,26 +14,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 # limitations under the License.
-################################################################################
+#################################################################################
 
-from .util import constants
-from .pypaimon import (Catalog, Table, ReadBuilder, TableScan, Plan, Split, TableRead,
-                       BatchWriteBuilder, BatchTableWrite, CommitMessage, BatchTableCommit,
-                       Predicate, PredicateBuilder)
+from .api import Schema
 
 __all__ = [
-    'constants',
-    'Catalog',
-    'Table',
-    'ReadBuilder',
-    'TableScan',
-    'Plan',
-    'Split',
-    'TableRead',
-    'BatchWriteBuilder',
-    'BatchTableWrite',
-    'CommitMessage',
-    'BatchTableCommit',
-    'Predicate',
-    'PredicateBuilder'
+    'Schema',
+
 ]

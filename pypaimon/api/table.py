@@ -16,37 +16,36 @@
 # limitations under the License.
 #################################################################################
 
+import pyarrow as pa
+
 from abc import ABC, abstractmethod
-from paimon_python_api import TableRead, TableScan, Predicate, PredicateBuilder
-from typing import List
+from pypaimon.api import ReadBuilder, BatchWriteBuilder
+from typing import Optional, List
 
 
-class ReadBuilder(ABC):
-    """An interface for building the TableScan and TableRead."""
-
-    @abstractmethod
-    def with_filter(self, predicate: Predicate):
-        """
-        Push filters, will filter the data as much as possible,
-        but it is not guaranteed that it is a complete filter.
-        """
+class Table(ABC):
+    """A table provides basic abstraction for table read and write."""
 
     @abstractmethod
-    def with_projection(self, projection: List[str]) -> 'ReadBuilder':
-        """Push nested projection."""
+    def new_read_builder(self) -> ReadBuilder:
+        """Return a builder for building table scan and table read."""
 
     @abstractmethod
-    def with_limit(self, limit: int) -> 'ReadBuilder':
-        """Push row number."""
+    def new_batch_write_builder(self) -> BatchWriteBuilder:
+        """Returns a builder for building batch table write and table commit."""
 
-    @abstractmethod
-    def new_scan(self) -> TableScan:
-        """Create a TableScan to perform batch planning."""
 
-    @abstractmethod
-    def new_read(self) -> TableRead:
-        """Create a TableRead to read splits."""
+class Schema:
+    """Schema of a table."""
 
-    @abstractmethod
-    def new_predicate_builder(self) -> PredicateBuilder:
-        """Create a builder for Predicate."""
+    def __init__(self,
+                 pa_schema: pa.Schema,
+                 partition_keys: Optional[List[str]] = None,
+                 primary_keys: Optional[List[str]] = None,
+                 options: Optional[dict] = None,
+                 comment: Optional[str] = None):
+        self.pa_schema = pa_schema
+        self.partition_keys = partition_keys
+        self.primary_keys = primary_keys
+        self.options = options
+        self.comment = comment

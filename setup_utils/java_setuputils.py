@@ -22,7 +22,7 @@ import subprocess
 
 from xml.etree import ElementTree
 
-_JAVA_IMPL_MODULE = 'paimon_python_java'
+_JAVA_IMPL_MODULE = 'pypaimon/py4j'
 _JAVA_DEPS = 'java_dependencies'
 _JAVA_BRIDGE = 'paimon-python-java-bridge'
 

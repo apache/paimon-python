@@ -19,7 +19,7 @@
 import os
 import urllib.request
 
-from paimon_python_java.util import constants
+from pypaimon.py4j import constants
 
 
 def setup_hadoop_bundle_jar(hadoop_dir):

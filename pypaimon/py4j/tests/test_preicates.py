@@ -24,10 +24,10 @@ import random
 import pandas as pd
 import pyarrow as pa
 
-from paimon_python_api import Schema
-from paimon_python_java import Catalog
-from paimon_python_java.tests import utils
-from setup_utils import java_setuputils
+from pypaimon import Schema
+from pypaimon.py4j import Catalog
+from pypaimon.py4j.tests import utils
+from pypaimon.py4j.util import java_setuputils
 
 
 def _check_filtered_result(read_builder, expected_df):

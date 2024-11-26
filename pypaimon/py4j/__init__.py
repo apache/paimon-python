@@ -14,23 +14,27 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 # limitations under the License.
-#################################################################################
+################################################################################
 
-from abc import ABC, abstractmethod
-from paimon_python_api import CommitMessage
-from typing import List
+from .util import constants
+from .java_implementation import \
+    (Catalog, Table, ReadBuilder, TableScan, Plan, Split,
+     TableRead, BatchWriteBuilder, BatchTableWrite, CommitMessage,
+     BatchTableCommit, Predicate, PredicateBuilder)
 
-
-class BatchTableCommit(ABC):
-    """A table commit for batch processing. Recommended for one-time committing."""
-
-    @abstractmethod
-    def commit(self, commit_messages: List[CommitMessage]):
-        """
-        Commit the commit messages to generate snapshots. One commit may generate
-        up to two snapshots, one for adding new files and the other for compaction.
-        """
-
-    @abstractmethod
-    def close(self):
-        """Close this resource."""
+__all__ = [
+    'constants',
+    'Catalog',
+    'Table',
+    'ReadBuilder',
+    'TableScan',
+    'Plan',
+    'Split',
+    'TableRead',
+    'BatchWriteBuilder',
+    'BatchTableWrite',
+    'CommitMessage',
+    'BatchTableCommit',
+    'Predicate',
+    'PredicateBuilder'
+]

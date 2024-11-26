@@ -17,29 +17,21 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
-from typing import Optional
-from paimon_python_api import Table, Schema
+from typing import List
+from pypaimon.api import Split
 
 
-class Catalog(ABC):
-    """
-    This interface is responsible for reading and writing
-    metadata such as database/table from a paimon catalog.
-    """
-
-    @staticmethod
-    @abstractmethod
-    def create(catalog_options: dict) -> 'Catalog':
-        """Create catalog from configuration."""
+class TableScan(ABC):
+    """A scan of Table to generate splits."""
 
     @abstractmethod
-    def get_table(self, identifier: str) -> Table:
-        """Get paimon table identified by the given Identifier."""
+    def plan(self) -> 'Plan':
+        """Plan splits."""
+
+
+class Plan(ABC):
+    """Plan of scan."""
 
     @abstractmethod
-    def create_database(self, name: str, ignore_if_exists: bool, properties: Optional[dict] = None):
-        """Create a database with properties."""
-
-    @abstractmethod
-    def create_table(self, identifier: str, schema: Schema, ignore_if_exists: bool):
-        """Create table."""
+    def splits(self) -> List[Split]:
+        """Return the splits."""

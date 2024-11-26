@@ -24,11 +24,10 @@ import tempfile
 import pyarrow as pa
 import unittest
 
-from paimon_python_api import Schema
-from paimon_python_java import Catalog
-from paimon_python_java.tests import utils
-from paimon_python_java.util import java_utils
-from setup_utils import java_setuputils
+from pypaimon import Schema
+from pypaimon.py4j import Catalog
+from pypaimon.py4j.tests import utils
+from pypaimon.py4j.util import java_utils, java_setuputils
 
 
 class DataTypesTest(unittest.TestCase):
