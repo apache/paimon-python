@@ -267,6 +267,12 @@ class TableWriteReadTest(unittest.TestCase):
         table_write.close()
         table_commit.close()
 
+        all_data = pd.DataFrame({
+            'f0': [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            'f1': ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
+        })
+        all_data['f0'] = all_data['f0'].astype('int32')
+
         read_builder = table.new_read_builder()
         table_scan = read_builder.new_scan()
         table_read = read_builder.new_read()
@@ -274,10 +280,7 @@ class TableWriteReadTest(unittest.TestCase):
 
         # to_arrow
         actual = table_read.to_arrow(splits)
-        expected = pa.Table.from_pydict({
-            'f0': [1, 2, 3, 4, 5, 6, 7, 8, 9],
-            'f1': ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
-        }, schema=self.simple_pa_schema)
+        expected = pa.Table.from_pandas(all_data, schema=self.simple_pa_schema)
         self.assertEqual(actual, expected)
 
         # to_arrow_batch_reader
@@ -286,18 +289,42 @@ class TableWriteReadTest(unittest.TestCase):
             for batch in table_read.to_arrow_batch_reader(splits)
         ]
         actual = pd.concat(data_frames)
-        expected = pd.DataFrame({
-            'f0': [1, 2, 3, 4, 5, 6, 7, 8, 9],
-            'f1': ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
-        })
-        expected['f0'] = expected['f0'].astype('int32')
         pd.testing.assert_frame_equal(
-            actual.reset_index(drop=True), expected.reset_index(drop=True))
+            actual.reset_index(drop=True), all_data.reset_index(drop=True))
 
         # to_pandas
         actual = table_read.to_pandas(splits)
         pd.testing.assert_frame_equal(
-            actual.reset_index(drop=True), expected.reset_index(drop=True))
+            actual.reset_index(drop=True), all_data.reset_index(drop=True))
+
+        # to_duckdb
+        duckdb_con = table_read.to_duckdb(splits, 'duckdb_table')
+        # select *
+        result1 = duckdb_con.query("SELECT * FROM duckdb_table").fetchdf()
+        pd.testing.assert_frame_equal(
+            result1.reset_index(drop=True), all_data.reset_index(drop=True))
+        # select * where
+        result2 = duckdb_con.query("SELECT * FROM duckdb_table WHERE f0 < 4").fetchdf()
+        expected2 = pd.DataFrame({
+            'f0': [1, 2, 3],
+            'f1': ['a', 'b', 'c']
+        })
+        expected2['f0'] = expected2['f0'].astype('int32')
+        pd.testing.assert_frame_equal(
+            result2.reset_index(drop=True), expected2.reset_index(drop=True))
+        # select f0 where
+        result3 = duckdb_con.query("SELECT f0 FROM duckdb_table WHERE f0 < 4").fetchdf()
+        expected3 = pd.DataFrame({
+            'f0': [1, 2, 3]
+        })
+        expected3['f0'] = expected3['f0'].astype('int32')
+        pd.testing.assert_frame_equal(
+            result3.reset_index(drop=True), expected3.reset_index(drop=True))
+
+        # to_ray
+        ray_dataset = table_read.to_ray(splits)
+        pd.testing.assert_frame_equal(
+            ray_dataset.to_pandas().reset_index(drop=True), all_data.reset_index(drop=True))
 
     def test_overwrite(self):
         schema = Schema(self.simple_pa_schema, partition_keys=['f0'],
