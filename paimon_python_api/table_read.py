@@ -52,4 +52,3 @@ class TableRead(ABC):
     @abstractmethod
     def to_ray(self, splits: List[Split]) -> ray.data.dataset.Dataset:
         """Convert splits into a Ray dataset format."""
-
