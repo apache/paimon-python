@@ -66,7 +66,7 @@ echo "Creating source package"
 git clone ${PROJECT_ROOT} ${CLONE_DIR}
 
 cd ${CLONE_DIR}
-JAVA_ROOT="paimon_python_java/paimon-python-java-bridge"
+JAVA_ROOT="pypaimon/py4j/paimon-python-java-bridge"
 rsync -a \
   --exclude ".DS_Store" --exclude ".asf.yaml" --exclude ".git" \
   --exclude ".github" --exclude ".gitignore" --exclude ".idea" \

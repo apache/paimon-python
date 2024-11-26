@@ -22,7 +22,7 @@ import ray
 
 from abc import ABC, abstractmethod
 from duckdb.duckdb import DuckDBPyConnection
-from paimon_python_api import Split
+from pypaimon.api import Split
 from typing import List, Optional
 
 
