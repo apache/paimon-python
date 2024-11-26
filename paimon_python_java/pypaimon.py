@@ -18,6 +18,7 @@
 
 import duckdb
 import pandas as pd
+import polars as pl
 import pyarrow as pa
 import ray
 
@@ -163,6 +164,9 @@ class TableRead(table_read.TableRead):
 
     def to_pandas(self, splits: List[Split]) -> pd.DataFrame:
         return self.to_arrow(splits).to_pandas()
+
+    def to_polars(self, splits: List[Split]) -> pl.DataFrame:
+        return pl.from_arrow(self.to_arrow(splits))
 
     def to_duckdb(
             self,

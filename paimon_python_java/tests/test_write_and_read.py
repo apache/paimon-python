@@ -22,8 +22,10 @@ import tempfile
 import unittest
 import pandas as pd
 import pyarrow as pa
+import polars as pl
 from py4j.protocol import Py4JJavaError
 
+from polars import testing as pl_testing
 from paimon_python_api import Schema
 from paimon_python_java import Catalog
 from paimon_python_java.java_gateway import get_gateway
@@ -296,6 +298,10 @@ class TableWriteReadTest(unittest.TestCase):
         actual = table_read.to_pandas(splits)
         pd.testing.assert_frame_equal(
             actual.reset_index(drop=True), all_data.reset_index(drop=True))
+
+        # to_polars
+        pl_df = table_read.to_polars(splits)
+        pl_testing.assert_frame_equal(pl_df, pl.from_pandas(all_data))
 
         # to_duckdb
         duckdb_con = table_read.to_duckdb(splits, 'duckdb_table')

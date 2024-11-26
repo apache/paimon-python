@@ -17,6 +17,7 @@
 #################################################################################
 
 import pandas as pd
+import polars as pl
 import pyarrow as pa
 import ray
 
@@ -40,6 +41,10 @@ class TableRead(ABC):
     @abstractmethod
     def to_pandas(self, splits: List[Split]) -> pd.DataFrame:
         """Read data from splits and converted to pandas.DataFrame format."""
+
+    @abstractmethod
+    def to_polars(self, splits: List[Split]) -> pl.DataFrame:
+        """Read data from splits and converted to polars.DataFrame format."""
 
     @abstractmethod
     def to_duckdb(
