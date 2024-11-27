@@ -16,18 +16,12 @@
 # limitations under the License.
 ################################################################################
 
-import os
-import shutil
-import tempfile
-import unittest
 import random
 import pandas as pd
 import pyarrow as pa
 
 from pypaimon import Schema
-from pypaimon.py4j import Catalog
-from pypaimon.py4j.tests import utils
-from setup_utils import java_setuputils
+from pypaimon.py4j.tests import PypaimonTestBase
 
 
 def _check_filtered_result(read_builder, expected_df):
@@ -38,41 +32,34 @@ def _check_filtered_result(read_builder, expected_df):
         actual_df.reset_index(drop=True), expected_df.reset_index(drop=True))
 
 
-# TODO: parquet has bug now
+# TODO: Parquet has bug now. Fixed in 1.0.
 def _random_format():
     return random.choice(['avro', 'orc'])
 
 
-class PredicateTest(unittest.TestCase):
+class PredicateTest(PypaimonTestBase):
 
     @classmethod
     def setUpClass(cls):
-        java_setuputils.setup_java_bridge()
-        cls.hadoop_path = tempfile.mkdtemp()
-        utils.setup_hadoop_bundle_jar(cls.hadoop_path)
-        cls.warehouse = tempfile.mkdtemp()
-
-        catalog = Catalog.create({'warehouse': cls.warehouse})
-        catalog.create_database('default', False)
-
+        super().setUpClass()
         pa_schema = pa.schema([
             ('f0', pa.int64()),
             ('f1', pa.string()),
         ])
-        catalog.create_table('default.test_append',
-                             Schema(pa_schema, options={'file.format': _random_format()}),
-                             False)
-        catalog.create_table('default.test_pk',
-                             Schema(pa_schema, primary_keys=['f0'],
-                                    options={'bucket': '1', 'file.format': _random_format()}),
-                             False)
+        cls.catalog.create_table('default.test_append',
+                                 Schema(pa_schema, options={'file.format': _random_format()}),
+                                 False)
+        cls.catalog.create_table('default.test_pk',
+                                 Schema(pa_schema, primary_keys=['f0'],
+                                        options={'bucket': '1', 'file.format': _random_format()}),
+                                 False)
 
         df = pd.DataFrame({
             'f0': [1, 2, 3, 4, 5],
             'f1': ['abc', 'abbc', 'bc', 'd', None],
         })
 
-        append_table = catalog.get_table('default.test_append')
+        append_table = cls.catalog.get_table('default.test_append')
         write_builder = append_table.new_batch_write_builder()
         write = write_builder.new_write()
         commit = write_builder.new_commit()
@@ -81,7 +68,7 @@ class PredicateTest(unittest.TestCase):
         write.close()
         commit.close()
 
-        pk_table = catalog.get_table('default.test_pk')
+        pk_table = cls.catalog.get_table('default.test_pk')
         write_builder = pk_table.new_batch_write_builder()
         write = write_builder.new_write()
         commit = write_builder.new_commit()
@@ -90,16 +77,7 @@ class PredicateTest(unittest.TestCase):
         write.close()
         commit.close()
 
-        cls.catalog = catalog
         cls.df = df
-
-    @classmethod
-    def tearDownClass(cls):
-        java_setuputils.clean()
-        if os.path.exists(cls.hadoop_path):
-            shutil.rmtree(cls.hadoop_path)
-        if os.path.exists(cls.warehouse):
-            shutil.rmtree(cls.warehouse)
 
     def testWrongFieldName(self):
         table = self.catalog.get_table('default.test_append')

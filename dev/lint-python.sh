@@ -577,8 +577,9 @@ function tox_check() {
     # Ensure the permission of the scripts set correctly
     chmod +x $PAIMON_PYTHON_DIR/dev/*
 
-    # tox runs codes in virtual env, set var to avoid error
-    export _PYPAIMON_TOX_TEST="true"
+    # dummy jar needed by setup.py
+    mkdir -p $PAIMON_PYTHON_DIR/deps/jars
+    touch $PAIMON_PYTHON_DIR/deps/jars/dummy.jar
 
     if [[ -n "$GITHUB_ACTION" ]]; then
         # Run tests in all versions triggered by a Git push (tests aren't so many currently)
@@ -595,6 +596,9 @@ function tox_check() {
         index=$(($RANDOM % ENV_LIST_SIZE))
         $TOX_PATH -vv -c $PAIMON_PYTHON_DIR/tox.ini -e ${ENV_LIST[$index]} --recreate 2>&1 | tee -a $LOG_FILE
     fi
+
+    # delete dummy jar
+    rm -rf $PAIMON_PYTHON_DIR/deps
 
     TOX_RESULT=$((grep -c "congratulations :)" "$LOG_FILE") 2>&1)
     if [ $TOX_RESULT -eq '0' ]; then
