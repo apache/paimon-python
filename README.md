@@ -31,6 +31,16 @@ We provide script to check codes.
 ./dev/lint-python.sh -h # run this to see more usages         
 ```
 
+## Build
+
+We provide a script to build source distribution package.
+
+```shell
+./dev/build-source-distribution-package.sh
+```
+
+The package is under `dist/`.
+
 # Usage
 
 See Apache Paimon Python API [Doc](https://paimon.apache.org/docs/master/program-api/python-api/).
