@@ -18,12 +18,18 @@
 #
 
 ##
-## Required variables
+## set build vars
 ##
-RELEASE_VERSION=${RELEASE_VERSION}
+OUTPUT_DIR=${OUTPUT_DIR}
+GPG_PASSPHRASE=${GPG_PASSPHRASE}
 
-if [ -z "${RELEASE_VERSION}" ]; then
-	echo "RELEASE_VERSION was not set"
+if [ -z "${OUTPUT_DIR}" ]; then
+	echo "OUTPUT_DIR was not set"
+	exit 1
+fi
+
+if [ -z "${GPG_PASSPHRASE}" ]; then
+	echo "GPG_PASSPHRASE was not set"
 	exit 1
 fi
 
@@ -63,9 +69,8 @@ if grep -q "<version>.*SNAPSHOT</version>" "pom.xml"; then
     exit 1
 fi
 
-# get version
+# get bridge jar version
 JAR_VERSION=$(sed -n 's/.*<version>\(.*\)<\/version>.*/\1/p' pom.xml | head -n 1)
-echo $JAR_VERSION
 
 mvn clean install -DskipTests
 cp "target/paimon-python-java-bridge-${JAR_VERSION}.jar" ${DEPS_DIR}
@@ -74,9 +79,8 @@ cd ${CURR_DIR}
 
 # build source release
 
-RELEASE_DIR=${PROJECT_ROOT}/release
-rm -rf ${RELEASE_DIR}
-mkdir -p ${RELEASE_DIR}
+# get release version
+RELEASE_VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' ${PROJECT_ROOT}/pypaimon/version.py)
 
 # use lint-python.sh script to create a python environment.
 dev/lint-python.sh -s basic
@@ -85,12 +89,12 @@ source dev/.conda/bin/activate
 python setup.py sdist
 conda deactivate
 WHEEL_FILE_NAME="pypaimon-${RELEASE_VERSION}.tar.gz"
-cp "dist/${WHEEL_FILE_NAME}" "${RELEASE_DIR}/${WHEEL_FILE_NAME}"
+cp "dist/${WHEEL_FILE_NAME}" "${OUTPUT_DIR}/${WHEEL_FILE_NAME}"
 
-cd ${RELEASE_DIR}
+cd ${OUTPUT_DIR}
 
 # Sign sha the wheel package
-gpg --armor --detach-sig ${WHEEL_FILE_NAME}
+gpg --batch --yes --pinentry-mode loopback --passphrase=$GPG_PASSPHRASE --armor --detach-sign ${WHEEL_FILE_NAME}
 $SHASUM ${WHEEL_FILE_NAME} > "${WHEEL_FILE_NAME}.sha512"
 
 rm -rf DEPS_DIR
