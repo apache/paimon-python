@@ -26,3 +26,6 @@ PYPAIMON_MAIN_ARGS = '_PYPAIMON_MAIN_ARGS'
 
 # ------------------------ for catalog options ------------------------
 MAX_WORKERS = "max-workers"
+
+# ------------------ for tests (Please don't use it) ------------------
+PYPAIMON4J_TEST_MODE = '_PYPAIMON4J_TEST_MODE'

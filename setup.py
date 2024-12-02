@@ -16,84 +16,65 @@
 # limitations under the License.
 ################################################################################
 
-import fnmatch
 import os
-import shutil
-import setup_utils.java_setuputils as java_setuputils
-import setup_utils.version
+import sys
 
-from setuptools import Command, setup
+from setuptools import setup
 
-
-class CleanCommand(Command):
-    description = 'Clean up temporary files and directories of last build.'
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        directories_to_delete = ['build', 'dist', '*.egg-info']
-
-        for directory in directories_to_delete:
-            if '*' in directory:
-                for matched_dir in filter(lambda x: fnmatch.fnmatch(x, directory), os.listdir('.')):
-                    if os.path.isdir(matched_dir):
-                        shutil.rmtree(matched_dir)
-            else:
-                if os.path.exists(directory):
-                    shutil.rmtree(directory)
-
+this_directory = os.path.abspath(os.path.dirname(__file__))
+version_file = os.path.join(this_directory, 'pypaimon/version.py')
 
 try:
-    PACKAGES = [
-        'pypaimon',
-        'pypaimon.api',
-        'pypaimon.py4j',
-        'pypaimon.py4j.util'
-    ]
+    exec(open(version_file).read())
+except IOError:
+    print("Failed to load PyPaimon version file for packaging. " +
+          "'%s' not found!" % version_file,
+          file=sys.stderr)
+    sys.exit(-1)
+VERSION = __version__  # noqa
 
-    PACKAGE_DATA = {
-        'pypaimon.py4j': java_setuputils.get_package_data()
-    }
+PACKAGES = [
+    'pypaimon',
+    'pypaimon.api',
+    'pypaimon.py4j',
+    'pypaimon.py4j.util',
+    'pypaimon.jars'
+]
 
-    install_requires = [
-        'py4j==0.10.9.7',
-        'python-dateutil>=2.8.0,<3',
-        'pytz>=2018.3',
-        'numpy>=1.22.4',
-        'pandas>=1.3.0',
-        'pyarrow>=5.0.0'
-    ]
+install_requires = [
+    'py4j==0.10.9.7',
+    'pandas>=1.3.0',
+    'pyarrow>=5.0.0'
+]
 
-    long_description = 'See Apache Paimon Python API \
-    [Doc](https://paimon.apache.org/docs/master/program-api/python-api/) for usage.'
+long_description = 'See Apache Paimon Python API \
+[Doc](https://paimon.apache.org/docs/master/program-api/python-api/) for usage.'
 
-    setup(
-        name='pypaimon',
-        version=setup_utils.version.__version__,
-        packages=PACKAGES,
-        include_package_data=True,
-        package_data=PACKAGE_DATA,
-        cmdclass={'clean': CleanCommand},
-        install_requires=install_requires,
-        description='Apache Paimon Python API',
-        long_description=long_description,
-        long_description_content_type='text/markdown',
-        author='Apache Software Foundation',
-        author_email='dev@paimon.apache.org',
-        url='https://paimon.apache.org',
-        classifiers=[
-            'Development Status :: 4 - Beta',
-            'License :: OSI Approved :: Apache Software License',
-            'Programming Language :: Python :: 3.8',
-            'Programming Language :: Python :: 3.9',
-            'Programming Language :: Python :: 3.10',
-            'Programming Language :: Python :: 3.11'],
-        python_requires='>=3.8'
-    )
-finally:
-    java_setuputils.clean()
+setup(
+    name='pypaimon',
+    version=VERSION,
+    packages=PACKAGES,
+    include_package_data=True,
+    # releasing tool will generate deps
+    package_dir={
+        "pypaimon.jars": "deps/jars"
+    },
+    package_data={
+        "pypaimon.jars": ["*.jar"]
+    },
+    install_requires=install_requires,
+    description='Apache Paimon Python API',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    author='Apache Software Foundation',
+    author_email='dev@paimon.apache.org',
+    url='https://paimon.apache.org',
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'License :: OSI Approved :: Apache Software License',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11'],
+    python_requires='>=3.8'
+)

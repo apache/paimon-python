@@ -34,7 +34,7 @@ set -o nounset
 CURR_DIR=`pwd`
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 PROJECT_ROOT="${BASE_DIR}/../../"
-SETUP_UTILS_DIR="${PROJECT_ROOT}/setup_utils"
+PYPAIMON_DIR="${PROJECT_ROOT}/pypaimon"
 
 # Sanity check to ensure that resolved paths are valid; a LICENSE file should always exist in project root
 if [ ! -f ${PROJECT_ROOT}/LICENSE ]; then
@@ -44,7 +44,7 @@ fi
 
 ###########################
 
-cd ${SETUP_UTILS_DIR}/
+cd ${PYPAIMON_DIR}/
 
 # change version
 perl -pi -e "s#^__version__ = \".*\"#__version__ = \"${NEW_VERSION}\"#" version.py

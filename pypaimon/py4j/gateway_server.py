@@ -16,7 +16,7 @@
 # limitations under the License.
 ################################################################################
 
-import importlib
+import importlib.resources
 import os
 import platform
 import signal
@@ -74,17 +74,21 @@ def launch_gateway_server_process(env):
                  stdin=PIPE, stderr=PIPE, preexec_fn=preexec_fn, env=env)
 
 
-_JAVA_IMPL_MODULE = 'pypaimon.py4j'
-_JAVA_DEPS = 'java_dependencies'
-_JAVA_BRIDGE = 'paimon-python-java-bridge'
+_JAVA_DEPS_PACKAGE = 'pypaimon.jars'
 
 
 def _get_classpath(env):
     classpath = []
 
-    module = importlib.import_module(_JAVA_IMPL_MODULE)
-    builtin_java_bridge = os.path.join(*module.__path__, _JAVA_DEPS, _JAVA_BRIDGE + '.jar')
-    classpath.append(builtin_java_bridge)
+    # note that jars are not packaged in test
+    test_mode = os.environ.get(constants.PYPAIMON4J_TEST_MODE)
+    if not test_mode or test_mode.lower() != "true":
+        jars = importlib.resources.files(_JAVA_DEPS_PACKAGE)
+        one_jar = next(iter(jars.iterdir()), None)
+        if not one_jar:
+            raise ValueError("Haven't found necessary python-java-bridge jar, this is unexpected.")
+        builtin_java_classpath = os.path.join(os.path.dirname(str(one_jar)), '*')
+        classpath.append(builtin_java_classpath)
 
     # user defined
     if constants.PYPAIMON_JAVA_CLASSPATH in env:

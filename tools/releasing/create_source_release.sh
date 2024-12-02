@@ -18,12 +18,18 @@
 #
 
 ##
-## Required variables
+## set build vars
 ##
-RELEASE_VERSION=${RELEASE_VERSION}
+OUTPUT_DIR=${OUTPUT_DIR}
+GPG_PASSPHRASE=${GPG_PASSPHRASE}
 
-if [ -z "${RELEASE_VERSION}" ]; then
-	echo "RELEASE_VERSION is unset"
+if [ -z "${OUTPUT_DIR}" ]; then
+	echo "OUTPUT_DIR was not set"
+	exit 1
+fi
+
+if [ -z "${GPG_PASSPHRASE}" ]; then
+	echo "GPG_PASSPHRASE was not set"
 	exit 1
 fi
 
@@ -33,7 +39,7 @@ set -o nounset
 
 CURR_DIR=`pwd`
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-PROJECT_ROOT="$( cd "$( dirname "${BASE_DIR}/../../../" )" >/dev/null && pwd )"
+PROJECT_ROOT="${BASE_DIR}/../../"
 
 # Sanity check to ensure that resolved paths are valid; a LICENSE file should always exist in project root
 if [ ! -f ${PROJECT_ROOT}/LICENSE ]; then
@@ -43,48 +49,53 @@ fi
 
 if [ "$(uname)" == "Darwin" ]; then
     SHASUM="shasum -a 512"
-    TAR="tar --no-xattrs"
 else
     SHASUM="sha512sum"
-    TAR="tar"
 fi
 
 ###########################
 
-RELEASE_DIR=${PROJECT_ROOT}/release/source
-CLONE_DIR=${RELEASE_DIR}/paimon-tmp-clone
+# prepare bridge jar
 
-rm -rf ${RELEASE_DIR}
-mkdir -p ${RELEASE_DIR}
+DEPS_DIR=${PROJECT_ROOT}/deps/jars
+rm -rf ${DEPS_DIR}
+mkdir -p ${DEPS_DIR}
 
-# delete the temporary release directory on error
-trap 'rm -rf ${RELEASE_DIR}' ERR
+cd ${PROJECT_ROOT}/paimon-python-java-bridge
 
-echo "Creating source package"
+# check there is no snapshot dependencies
+if grep -q "<version>.*SNAPSHOT</version>" "pom.xml"; then
+    echo "paimon-python-java-bridge is snapshot or contains snapshot dependencies"
+    exit 1
+fi
 
-# create a temporary git clone to ensure that we have a pristine source release
-git clone ${PROJECT_ROOT} ${CLONE_DIR}
+# get bridge jar version
+JAR_VERSION=$(sed -n 's/.*<version>\(.*\)<\/version>.*/\1/p' pom.xml | head -n 1)
 
-cd ${CLONE_DIR}
-JAVA_ROOT="pypaimon/py4j/paimon-python-java-bridge"
-rsync -a \
-  --exclude ".DS_Store" --exclude ".asf.yaml" --exclude ".git" \
-  --exclude ".github" --exclude ".gitignore" --exclude ".idea" \
-  --exclude ".mypy_cache" --exclude ".tox" --exclude "__pycache__" \
-  --exclude "build" --exclude "dist" --exclude "*.egg-info" \
-  --exclude "dev/.conda" --exclude "dev/.stage.txt" \
-  --exclude "dev/download" --exclude "dev/log" --exclude "**/__pycache__" \
-  --exclude "${JAVA_ROOT}/dependency-reduced-pom.xml" \
-  --exclude "${JAVA_ROOT}/target" \
-  . paimon-python-${RELEASE_VERSION}
+mvn clean install -DskipTests
+cp "target/paimon-python-java-bridge-${JAR_VERSION}.jar" ${DEPS_DIR}
 
-TAR czf ${RELEASE_DIR}/apache-paimon-python-${RELEASE_VERSION}-src.tgz paimon-python-${RELEASE_VERSION}
-gpg --armor --detach-sig ${RELEASE_DIR}/apache-paimon-python-${RELEASE_VERSION}-src.tgz
-cd ${RELEASE_DIR}
-${SHASUM} apache-paimon-python-${RELEASE_VERSION}-src.tgz > apache-paimon-python-${RELEASE_VERSION}-src.tgz.sha512
+cd ${CURR_DIR}
 
-rm -rf ${CLONE_DIR}
+# build source release
 
-echo "Done. Source release package and signatures created under ${RELEASE_DIR}/."
+# get release version
+RELEASE_VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' ${PROJECT_ROOT}/pypaimon/version.py)
 
+# use lint-python.sh script to create a python environment.
+dev/lint-python.sh -s basic
+source dev/.conda/bin/activate
+
+python setup.py sdist
+conda deactivate
+PACKAGE_FILE="pypaimon-${RELEASE_VERSION}.tar.gz"
+cp "dist/${PACKAGE_FILE}" "${OUTPUT_DIR}/${PACKAGE_FILE}"
+
+cd ${OUTPUT_DIR}
+
+# Sign sha the wheel package
+gpg --batch --yes --pinentry-mode loopback --passphrase=$GPG_PASSPHRASE --armor --detach-sign ${PACKAGE_FILE}
+$SHASUM ${PACKAGE_FILE} > "${PACKAGE_FILE}.sha512"
+
+rm -rf DEPS_DIR
 cd ${CURR_DIR}

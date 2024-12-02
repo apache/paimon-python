@@ -16,10 +16,6 @@
 # limitations under the License.
 ################################################################################
 
-import os
-import shutil
-import tempfile
-import unittest
 import pandas as pd
 import pyarrow as pa
 from py4j.protocol import Py4JJavaError
@@ -27,33 +23,19 @@ from py4j.protocol import Py4JJavaError
 from pypaimon import Schema
 from pypaimon.py4j import Catalog
 from pypaimon.py4j.java_gateway import get_gateway
-from pypaimon.py4j.tests import utils
+from pypaimon.py4j.tests import PypaimonTestBase
 from pypaimon.py4j.util import java_utils
-from setup_utils import java_setuputils
 
 
-class TableWriteReadTest(unittest.TestCase):
+class TableWriteReadTest(PypaimonTestBase):
 
     @classmethod
     def setUpClass(cls):
-        java_setuputils.setup_java_bridge()
-        cls.hadoop_path = tempfile.mkdtemp()
-        utils.setup_hadoop_bundle_jar(cls.hadoop_path)
-        cls.warehouse = tempfile.mkdtemp()
+        super().setUpClass()
         cls.simple_pa_schema = pa.schema([
             ('f0', pa.int32()),
             ('f1', pa.string())
         ])
-        cls.catalog = Catalog.create({'warehouse': cls.warehouse})
-        cls.catalog.create_database('default', False)
-
-    @classmethod
-    def tearDownClass(cls):
-        java_setuputils.clean()
-        if os.path.exists(cls.hadoop_path):
-            shutil.rmtree(cls.hadoop_path)
-        if os.path.exists(cls.warehouse):
-            shutil.rmtree(cls.warehouse)
 
     def testReadEmptyAppendTable(self):
         schema = Schema(self.simple_pa_schema)

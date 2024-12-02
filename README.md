@@ -31,16 +31,6 @@ We provide script to check codes.
 ./dev/lint-python.sh -h # run this to see more usages         
 ```
 
-## Build
-
-We provide script to build wheel.
-
-```shell
-./dev/build-wheels.sh
-```
-
-The target wheel is under `dist/`
-
 # Usage
 
 See Apache Paimon Python API [Doc](https://paimon.apache.org/docs/master/program-api/python-api/).
