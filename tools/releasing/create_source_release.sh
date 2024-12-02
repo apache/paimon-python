@@ -88,14 +88,14 @@ source dev/.conda/bin/activate
 
 python setup.py sdist
 conda deactivate
-WHEEL_FILE_NAME="pypaimon-${RELEASE_VERSION}.tar.gz"
-cp "dist/${WHEEL_FILE_NAME}" "${OUTPUT_DIR}/${WHEEL_FILE_NAME}"
+PACKAGE_FILE="pypaimon-${RELEASE_VERSION}.tar.gz"
+cp "dist/${PACKAGE_FILE}" "${OUTPUT_DIR}/${PACKAGE_FILE}"
 
 cd ${OUTPUT_DIR}
 
 # Sign sha the wheel package
-gpg --batch --yes --pinentry-mode loopback --passphrase=$GPG_PASSPHRASE --armor --detach-sign ${WHEEL_FILE_NAME}
-$SHASUM ${WHEEL_FILE_NAME} > "${WHEEL_FILE_NAME}.sha512"
+gpg --batch --yes --pinentry-mode loopback --passphrase=$GPG_PASSPHRASE --armor --detach-sign ${PACKAGE_FILE}
+$SHASUM ${PACKAGE_FILE} > "${PACKAGE_FILE}.sha512"
 
 rm -rf DEPS_DIR
 cd ${CURR_DIR}
