@@ -48,7 +48,7 @@ install_requires = [
 ]
 
 long_description = 'See Apache Paimon Python API \
-    [Doc](https://paimon.apache.org/docs/master/program-api/python-api/) for usage.'
+[Doc](https://paimon.apache.org/docs/master/program-api/python-api/) for usage.'
 
 setup(
     name='pypaimon',
@@ -70,7 +70,7 @@ setup(
     author_email='dev@paimon.apache.org',
     url='https://paimon.apache.org',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
