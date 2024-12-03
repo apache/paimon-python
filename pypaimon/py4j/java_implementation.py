@@ -18,19 +18,20 @@
 
 # pypaimon.api implementation based on Java code & py4j lib
 
-import duckdb
 import pandas as pd
 import pyarrow as pa
-import ray
 
-from duckdb.duckdb import DuckDBPyConnection
 from pypaimon.py4j.java_gateway import get_gateway
 from pypaimon.py4j.util import java_utils, constants
 from pypaimon.api import \
     (catalog, table, read_builder, table_scan, split,
      table_read, write_builder, table_write, commit_message,
      table_commit, Schema, predicate)
-from typing import List, Iterator, Optional, Any
+from typing import List, Iterator, Optional, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import ray
+    from duckdb.duckdb import DuckDBPyConnection
 
 
 class Catalog(catalog.Catalog):
@@ -171,12 +172,16 @@ class TableRead(table_read.TableRead):
             self,
             splits: List[Split],
             table_name: str,
-            connection: Optional[DuckDBPyConnection] = None) -> DuckDBPyConnection:
+            connection: Optional["DuckDBPyConnection"] = None) -> "DuckDBPyConnection":
+        import duckdb
+
         con = connection or duckdb.connect(database=":memory:")
         con.register(table_name, self.to_arrow(splits))
         return con
 
-    def to_ray(self, splits: List[Split]) -> ray.data.dataset.Dataset:
+    def to_ray(self, splits: List[Split]) -> "ray.data.dataset.Dataset":
+        import ray
+
         return ray.data.from_arrow(self.to_arrow(splits))
 
     def _init(self):
