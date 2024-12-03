@@ -18,12 +18,14 @@
 
 import pandas as pd
 import pyarrow as pa
-import ray
 
 from abc import ABC, abstractmethod
-from duckdb.duckdb import DuckDBPyConnection
 from pypaimon.api import Split
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import ray
+    from duckdb.duckdb import DuckDBPyConnection
 
 
 class TableRead(ABC):
@@ -46,9 +48,9 @@ class TableRead(ABC):
             self,
             splits: List[Split],
             table_name: str,
-            connection: Optional[DuckDBPyConnection] = None) -> DuckDBPyConnection:
+            connection: Optional["DuckDBPyConnection"] = None) -> "DuckDBPyConnection":
         """Convert splits into an in-memory DuckDB table which can be queried."""
 
     @abstractmethod
-    def to_ray(self, splits: List[Split]) -> ray.data.dataset.Dataset:
+    def to_ray(self, splits: List[Split]) -> "ray.data.dataset.Dataset":
         """Convert splits into a Ray dataset format."""
