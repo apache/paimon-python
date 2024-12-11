@@ -50,7 +50,7 @@ else
     PACKAGE_DIR="${SOURCE_PACKAGE:0:$((${#SOURCE_PACKAGE} - ${#EXTENSION}))}"
     tar -xf ${SOURCE_PACKAGE}
 
-    RUN_RAT="java -jar ${rat_jar} -d ${PACKAGE_DIR}"
+    RUN_RAT="java -jar ${rat_jar} -e PKG-INFO -e setup.cfg -e pypaimon.egg-info/* -d ${PACKAGE_DIR}"
 fi
 
 mkdir -p rat
@@ -64,6 +64,12 @@ if [ $? -ne 0 ]; then
 fi
 
 ERRORS="$(cat rat/rat-results.txt | grep -e "??")"
+
+# clean
+rm -rf rat
+if [ -d "$PACKAGE_DIR" ]; then
+    rm -rf $PACKAGE_DIR
+fi
 
 if [[ -n "${ERRORS}" ]]; then
     echo "Could not find Apache license headers in the following files:"
