@@ -24,6 +24,7 @@ PROJECT_ROOT="${BASE_DIR}/../"
 DEPS_DIR=${PROJECT_ROOT}/deps/jars
 rm -rf ${DEPS_DIR}
 mkdir -p ${DEPS_DIR}
+touch ${DEPS_DIR}/__init__.py
 
 cd ${PROJECT_ROOT}/paimon-python-java-bridge
 

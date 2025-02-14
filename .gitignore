@@ -16,3 +16,4 @@ dev/download
 dev/log
 dist/
 *.egg-info/
+venv
