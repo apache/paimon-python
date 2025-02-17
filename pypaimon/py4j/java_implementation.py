@@ -24,7 +24,7 @@ import pyarrow as pa
 from pypaimon.py4j.java_gateway import get_gateway
 from pypaimon.py4j.util import java_utils, constants
 from pypaimon.api import \
-    (catalog, table, read_builder, table_scan, split,
+    (catalog, table, read_builder, table_scan, split, row_type,
      table_read, write_builder, table_write, commit_message,
      table_commit, Schema, predicate)
 from typing import List, Iterator, Optional, Any, TYPE_CHECKING
@@ -115,6 +115,18 @@ class ReadBuilder(read_builder.ReadBuilder):
     def new_predicate_builder(self) -> 'PredicateBuilder':
         return PredicateBuilder(self._j_row_type)
 
+    def read_type(self) -> 'RowType':
+        return RowType(self._j_read_builder.readType())
+
+
+class RowType(row_type.RowType):
+
+    def __init__(self, j_row_type):
+        self._j_row_type = j_row_type
+
+    def as_arrow(self) -> "pa.Schema":
+        return java_utils.to_arrow_schema(self._j_row_type)
+
 
 class TableScan(table_scan.TableScan):
 
@@ -143,6 +155,23 @@ class Split(split.Split):
 
     def to_j_split(self):
         return self._j_split
+
+    def row_count(self) -> int:
+        return self._j_split.rowCount()
+
+    def file_size(self) -> int:
+        files_optional = self._j_split.convertToRawFiles()
+        if not files_optional.isPresent():
+            return 0
+        files = files_optional.get()
+        return sum(file.length() for file in files)
+
+    def file_paths(self) -> List[str]:
+        files_optional = self._j_split.convertToRawFiles()
+        if not files_optional.isPresent():
+            return []
+        files = files_optional.get()
+        return [file.path() for file in files]
 
 
 class TableRead(table_read.TableRead):

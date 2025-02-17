@@ -20,6 +20,8 @@ from abc import ABC, abstractmethod
 from pypaimon.api import TableRead, TableScan, Predicate, PredicateBuilder
 from typing import List
 
+from pypaimon.api.row_type import RowType
+
 
 class ReadBuilder(ABC):
     """An interface for building the TableScan and TableRead."""
@@ -50,3 +52,10 @@ class ReadBuilder(ABC):
     @abstractmethod
     def new_predicate_builder(self) -> PredicateBuilder:
         """Create a builder for Predicate."""
+
+    @abstractmethod
+    def read_type(self) -> RowType:
+        """
+        Return the row type of the builder. If there is a projection inside
+        the builder, the row type will only contain the selected fields.
+        """

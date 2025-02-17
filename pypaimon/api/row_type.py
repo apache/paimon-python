@@ -16,20 +16,14 @@
 # limitations under the License.
 #################################################################################
 
+import pyarrow as pa
+
 from abc import ABC, abstractmethod
 
-from typing import Iterator
 
-
-class Split(ABC):
-    """An input split for reading. The most important subclass is DataSplit."""
+class RowType(ABC):
+    """Data type of a sequence of fields."""
 
     @abstractmethod
-    def row_count(self) -> int:
-        """Return the total row count of the split."""
-
-    def file_size(self) -> int:
-        """Return the total file size of the split."""
-
-    def file_paths(self) -> Iterator[str]:
-        """Return the paths of all raw files in the split."""
+    def as_arrow(self) -> "pa.Schema":
+        """Return the row type as an Arrow schema."""
