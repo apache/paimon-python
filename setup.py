@@ -57,10 +57,12 @@ setup(
     include_package_data=True,
     # releasing tool will generate deps
     package_dir={
-        "pypaimon.jars": "deps/jars"
+        "pypaimon.jars": "deps/jars",
+        "pypaimon.hadoop-deps": "deps/hadoop"
     },
     package_data={
-        "pypaimon.jars": ["*.jar"]
+        "pypaimon.jars": ["*.jar"],
+        "pypaimon.hadoop-deps": ["*.jar"]
     },
     install_requires=install_requires,
     description='Apache Paimon Python API',
