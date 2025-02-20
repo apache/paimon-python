@@ -102,12 +102,20 @@ def _get_classpath(env):
     return os.pathsep.join(classpath)
 
 
+_HADOOP_DEPS_PACKAGE = 'pypaimon.hadoop-deps'
+
+
 def _get_hadoop_classpath(env):
     if constants.PYPAIMON_HADOOP_CLASSPATH in env:
         return env[constants.PYPAIMON_HADOOP_CLASSPATH]
-
-    if 'HADOOP_CLASSPATH' in env:
+    elif 'HADOOP_CLASSPATH' in env:
         return env['HADOOP_CLASSPATH']
     else:
-        raise EnvironmentError(f"You haven't set '{constants.PYPAIMON_HADOOP_CLASSPATH}', \
- and 'HADOOP_CLASSPATH' is also not set. Ensure one of them is set.")
+        # use built-in hadoop
+        jars = importlib.resources.files(_HADOOP_DEPS_PACKAGE)
+        one_jar = next(iter(jars.iterdir()), None)
+        if not one_jar:
+            raise EnvironmentError(f"The built-in Hadoop environment has been broken, this \
+            is unexpected. You can set one of '{constants.PYPAIMON_HADOOP_CLASSPATH}' or \
+            'HADOOP_CLASSPATH' to continue.")
+        return os.path.join(os.path.dirname(str(one_jar)), '*')

@@ -18,6 +18,7 @@
 
 global-exclude *.py[cod] __pycache__ .DS_Store
 recursive-include deps/jars *.jar
+recursive-include deps/hadoop *.jar
 include README.md
 include LICENSE
 include NOTICE
