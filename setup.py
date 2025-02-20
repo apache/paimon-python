@@ -38,7 +38,8 @@ PACKAGES = [
     'pypaimon.api',
     'pypaimon.py4j',
     'pypaimon.py4j.util',
-    'pypaimon.jars'
+    'pypaimon.jars',
+    'pypaimon.hadoop-deps'
 ]
 
 install_requires = [
