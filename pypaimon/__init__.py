@@ -17,5 +17,35 @@
 #################################################################################
 
 from .api import Schema
+from .py4j import Catalog
+from .py4j import CommitMessage
+from .py4j import Predicate
+from .py4j import PredicateBuilder
+from .py4j import ReadBuilder
+from .py4j import RowType
+from .py4j import Split
+from .py4j import Table
+from .py4j import BatchTableCommit
+from .py4j import TableRead
+from .py4j import TableScan
+from .py4j import Plan
+from .py4j import BatchTableWrite
+from .py4j import BatchWriteBuilder
 
-__all__ = ['Schema']
+__all__ = [
+    'Schema',
+    'Catalog',
+    'CommitMessage',
+    'Predicate',
+    'PredicateBuilder',
+    'ReadBuilder',
+    'RowType',
+    'Split',
+    'Table',
+    'BatchTableCommit',
+    'TableRead',
+    'TableScan',
+    'Plan',
+    'BatchTableWrite',
+    'BatchWriteBuilder'
+]
