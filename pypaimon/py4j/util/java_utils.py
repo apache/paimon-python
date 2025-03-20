@@ -100,3 +100,20 @@ def to_arrow_schema(j_row_type):
     arrow_schema = schema_reader.schema
     schema_reader.close()
     return arrow_schema
+
+
+def serialize_java_object(java_obj) -> bytes:
+    gateway = get_gateway()
+    util = gateway.jvm.org.apache.paimon.utils.InstantiationUtil
+    try:
+        java_bytes = util.serializeObject(java_obj)
+        return bytes(java_bytes)
+    except Exception as e:
+        raise RuntimeError(f"Java serialization failed: {e}")
+
+
+def deserialize_java_object(bytes_data):
+    gateway = get_gateway()
+    cl = get_gateway().jvm.Thread.currentThread().getContextClassLoader()
+    util = gateway.jvm.org.apache.paimon.utils.InstantiationUtil
+    return util.deserializeObject(bytes_data, cl)
