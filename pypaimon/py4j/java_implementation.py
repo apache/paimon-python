@@ -185,7 +185,7 @@ class TableRead(table_read.TableRead):
         record_batch_reader = self.to_arrow_batch_reader(splits)
         return pa.Table.from_batches(record_batch_reader, schema=self._arrow_schema)
 
-    def to_arrow_batch_reader(self, splits) -> pa.RecordBatchReader:
+    def to_arrow_batch_reader(self, splits):
         j_splits = list(map(lambda s: s.to_j_split(), splits))
         self._j_bytes_reader.setSplits(j_splits)
         batch_iterator = self._batch_generator()
