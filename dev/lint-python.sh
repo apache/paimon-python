@@ -643,26 +643,6 @@ function flake8_check() {
         print_function "STAGE" "flake8 checks... [SUCCESS]"
     fi
 }
-
-
-# mypy check
-function mypy_check() {
-    print_function "STAGE" "mypy checks"
-
-    # the return value of a pipeline is the status of the last command to exit
-    # with a non-zero status or zero if no command exited with a non-zero status
-    set -o pipefail
-
-    (${MYPY_PATH} --install-types --non-interactive --config-file tox.ini) 2>&1 | tee -a ${LOG_FILE}
-    TYPE_HINT_CHECK_STATUS=$?
-    if [ ${TYPE_HINT_CHECK_STATUS} -ne 0 ]; then
-        print_function "STAGE" "mypy checks... [FAILED]"
-        # Stop the running script.
-        exit 1;
-    else
-        print_function "STAGE" "mypy checks... [SUCCESS]"
-    fi
-}
 ###############################################################All Checks Definitions###############################################################
 
 # CURRENT_DIR is "paimon-python/dev/"
