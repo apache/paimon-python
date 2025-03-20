@@ -32,12 +32,12 @@ class TableRead(ABC):
     """To read data from data splits."""
 
     @abstractmethod
-    def to_arrow_batch_reader(self, splits: List[Split]) -> pa.RecordBatchReader:
-        """Read data from splits and converted to pyarrow.RecordBatchReader format."""
-
-    @abstractmethod
     def to_arrow(self, splits: List[Split]) -> pa.Table:
         """Read data from splits and converted to pyarrow.Table format."""
+
+    @abstractmethod
+    def to_arrow_batch_reader(self, splits: List[Split]) -> pa.RecordBatchReader:
+        """Read data from splits and converted to pyarrow.RecordBatchReader format."""
 
     @abstractmethod
     def to_pandas(self, splits: List[Split]) -> pd.DataFrame:

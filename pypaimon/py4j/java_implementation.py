@@ -181,15 +181,15 @@ class TableRead(table_read.TableRead):
         self._j_bytes_reader = get_gateway().jvm.InvocationUtil.createParallelBytesReader(
             j_table_read, j_read_type, TableRead._get_max_workers(catalog_options))
 
+    def to_arrow(self, splits) -> pa.Table:
+        record_batch_reader = self.to_arrow_batch_reader(splits)
+        return pa.Table.from_batches(record_batch_reader, schema=self._arrow_schema)
+
     def to_arrow_batch_reader(self, splits) -> pa.RecordBatchReader:
         j_splits = list(map(lambda s: s.to_j_split(), splits))
         self._j_bytes_reader.setSplits(j_splits)
         batch_iterator = self._batch_generator()
         return pa.RecordBatchReader.from_batches(self._arrow_schema, batch_iterator)
-
-    def to_arrow(self, splits) -> pa.Table:
-        record_batch_reader = self.to_arrow_batch_reader(splits)
-        return pa.Table.from_batches(record_batch_reader, schema=self._arrow_schema)
 
     def to_pandas(self, splits: List[Split]) -> pd.DataFrame:
         return self.to_arrow(splits).to_pandas()
