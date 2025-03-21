@@ -26,7 +26,7 @@
     <version>3.3.4</version>
 
     <properties>
-        <hadoop.version>3.3.4</hadoop.version>
+        <hadoop.version>3.4.0</hadoop.version>
         <log4j.version>2.17.1</log4j.version>
     </properties>
 
