@@ -580,6 +580,8 @@ function tox_check() {
     # dummy jar needed by setup.py
     mkdir -p $PAIMON_PYTHON_DIR/deps/jars
     touch $PAIMON_PYTHON_DIR/deps/jars/dummy.jar
+    mkdir -p $PAIMON_PYTHON_DIR/deps/hadoop
+    touch $PAIMON_PYTHON_DIR/deps/hadoop/dummy.jar
 
     if [[ -n "$GITHUB_ACTION" ]]; then
         # Run tests in all versions triggered by a Git push (tests aren't so many currently)

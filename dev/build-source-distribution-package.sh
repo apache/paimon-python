@@ -19,20 +19,34 @@ CURR_DIR=`pwd`
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 PROJECT_ROOT="${BASE_DIR}/../"
 
-# prepare bridge jar
-
-DEPS_DIR=${PROJECT_ROOT}/deps/jars
+DEPS_DIR=${PROJECT_ROOT}/deps
 rm -rf ${DEPS_DIR}
-mkdir -p ${DEPS_DIR}
-touch ${DEPS_DIR}/__init__.py
+
+# prepare bridge jar
+BRIDGE_DEPS_DIR=${DEPS_DIR}/jars
+mkdir -p ${BRIDGE_DEPS_DIR}
+touch ${BRIDGE_DEPS_DIR}/__init__.py
 
 cd ${PROJECT_ROOT}/paimon-python-java-bridge
 
 # get bridge jar version
-JAR_VERSION=$(sed -n 's/.*<version>\(.*\)<\/version>.*/\1/p' pom.xml | head -n 1)
+BRIDGE_JAR_VERSION=$(sed -n 's/.*<version>\(.*\)<\/version>.*/\1/p' pom.xml | head -n 1)
 
 mvn clean install -DskipTests
-cp "target/paimon-python-java-bridge-${JAR_VERSION}.jar" ${DEPS_DIR}
+cp "target/paimon-python-java-bridge-${BRIDGE_JAR_VERSION}.jar" ${BRIDGE_DEPS_DIR}
+
+# prepare hadoop-deps jar
+HADOOP_DEPS_DIR=${DEPS_DIR}/hadoop
+mkdir -p ${HADOOP_DEPS_DIR}
+touch ${HADOOP_DEPS_DIR}/__init__.py
+
+cd ${PROJECT_ROOT}/hadoop-deps
+
+# get hadoop-deps jar version
+HADOOP_JAR_VERSION=$(sed -n 's/.*<version>\(.*\)<\/version>.*/\1/p' pom.xml | head -n 1)
+
+mvn clean install -DskipTests
+cp "target/hadoop-deps-${HADOOP_JAR_VERSION}.jar" ${HADOOP_DEPS_DIR}
 
 cd ${CURR_DIR}
 
