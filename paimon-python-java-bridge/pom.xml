@@ -112,23 +112,6 @@
             <version>${log4j.version}</version>
         </dependency>
 
-<!--        &lt;!&ndash; for oss &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>org.apache.hadoop</groupId>-->
-<!--            <artifactId>hadoop-aws</artifactId>-->
-<!--            <version>3.3.4</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>com.amazonaws</groupId>-->
-<!--            <artifactId>aws-java-sdk-bundle</artifactId>-->
-<!--            <version>1.12.780</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.apache.paimon</groupId>-->
-<!--            <artifactId>paimon-s3</artifactId>-->
-<!--            <version>1.0.0</version>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>org.apache.parquet</groupId>
             <artifactId>parquet-common</artifactId>
@@ -198,31 +181,52 @@
             <scope>test</scope>
         </dependency>
 
-        <!--        &lt;!&ndash; 显式指定 Jackson 版本 &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>com.fasterxml.jackson.core</groupId>-->
-<!--            <artifactId>jackson-databind</artifactId>-->
-<!--            <version>2.13.5</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.13.5</version>
+            <scope>test</scope>
+        </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>com.fasterxml.jackson.module</groupId>-->
-<!--            <artifactId>jackson-module-scala_2.12</artifactId>-->
-<!--            <version>2.13.5</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.apache.arrow</groupId>-->
-<!--            <artifactId>arrow-dataset</artifactId>-->
-<!--            <version>9.0.0</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-scala_2.12</artifactId>
+            <version>2.13.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.arrow</groupId>
+            <artifactId>arrow-dataset</artifactId>
+            <version>9.0.0</version>
+            <scope>test</scope>
+        </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>org.apache.avro</groupId>-->
-<!--            <artifactId>avro</artifactId>-->
-<!--            <version>1.11.0</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+            <version>1.11.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- for oss -->
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-aws</artifactId>
+            <version>3.3.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-bundle</artifactId>
+            <version>1.12.780</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.paimon</groupId>
+            <artifactId>paimon-s3</artifactId>
+            <version>1.0.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
