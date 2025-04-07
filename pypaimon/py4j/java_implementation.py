@@ -189,6 +189,9 @@ class TableRead(table_read.TableRead):
         self._arrow_schema = java_utils.to_arrow_schema(j_read_type)
         self._j_bytes_reader = get_gateway().jvm.InvocationUtil.createParallelBytesReader(
             j_table_read, j_read_type, TableRead._get_max_workers(catalog_options))
+        self.j_table_read = j_table_read
+        self.j_read_type = j_read_type
+        self.catalog_options = catalog_options
 
     def to_arrow(self, splits):
         record_batch_reader = self.to_arrow_batch_reader(splits)
