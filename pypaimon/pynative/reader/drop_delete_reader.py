@@ -9,7 +9,6 @@ from pypaimon.pynative.record_reader_wrapper import convert_java_reader
 
 
 class DropDeleteReader(RecordReader):
-    """一个 RecordReader 实现，它会过滤掉不满足 RowKind.isAdd 的 KeyValue"""
 
 
     def __init__(self, java_reader: JavaObject):

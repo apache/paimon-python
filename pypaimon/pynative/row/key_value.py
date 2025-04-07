@@ -10,7 +10,7 @@ class KeyValue:
     sequence_number: int
     value_kind: RowKind
     value: InternalRow
-    level: int = -1  # 默认值设为-1，与Java版本保持一致
+    level: int = -1  # default value is -1, same as Java version
 
     def set_level(self, level: int) -> 'KeyValue':
         self.level = level

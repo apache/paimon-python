@@ -20,32 +20,29 @@ class KeyValueWrapIterator(FileRecordIterator):
         self.value_arity = value_arity
         self.level = level
 
-        # 创建可重用的OffsetRow对象，包含arity信息
         self.reused_key = OffsetRow(None, 0, key_arity)
         self.reused_value = OffsetRow(None, key_arity + 2, value_arity)  # 跳过sequence_number和value_kind
 
-    # ------- 实际数据例子 -------
-    # _KEY_student_id: 003
-    # _SEQUENCE_NUMBER: 2
-    # _VALUE_KIND: 0
-    # student_id: 003
-    # name: 小黄
-    # age: 20
-
+    '''
+    --- data example ---
+    _KEY_student_id: 003
+    _SEQUENCE_NUMBER: 2
+    _VALUE_KIND: 0
+    student_id: 003
+    name: 小黄
+    age: 20
+    '''
     def next(self) -> Optional[KeyValue]:
         row = self.iterator.next()
         if row is None:
             return None
 
-        # 使用OffsetRow获取字段
         self.reused_key.replace(row)
         self.reused_value.replace(row)
 
-        # 获取sequence_number和value_kind
         sequence_number = row.get_field(self.key_arity)
         value_kind = RowKind(row.get_field(self.key_arity + 1))
 
-        # 创建KeyValue对象
         return KeyValue(
             key=self.reused_key,
             sequence_number=sequence_number,

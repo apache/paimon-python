@@ -8,9 +8,6 @@ from pypaimon.pynative.record_reader_wrapper import convert_java_reader
 
 
 class EmptyFileRecordReader(FileRecordReader):
-    """
-    Python版本的ConcatRecordReader，直接使用Java的ReaderSupplier队列
-    """
     def __init__(self):
         pass
 

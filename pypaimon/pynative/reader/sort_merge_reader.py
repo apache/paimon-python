@@ -15,76 +15,40 @@ from pypaimon.pynative.row.row_kind import RowKind
 
 
 class DeduplicateMergeFunction:
-    """
-    去重合并函数，简单实现，仅保留最新的记录
-    """
 
     def __init__(self, ignore_delete: bool = False):
-        """
-        初始化去重合并函数
-
-        Args:
-            ignore_delete: 是否忽略删除记录
-        """
         self.ignore_delete = ignore_delete
         self.latest_kv = None
         self.is_initialized = False
         self.initial_kv = None
 
     def reset(self) -> None:
-        """重置合并函数状态"""
         self.latest_kv = None
         self.is_initialized = False
         self.initial_kv = None
 
     def add(self, kv: KeyValue) -> None:
-        """
-        添加一个KeyValue到合并函数中，仅保留最新的记录
-
-        Args:
-            kv: 要添加的KeyValue
-        """
-        # 如果是第一个记录，直接保存
         if self.initial_kv is None:
             self.initial_kv = kv
             return
 
-        # 如果是第二个记录，处理第一个记录
         if not self.is_initialized:
-            # 如果不忽略删除记录或第一个记录不是删除记录，则保存
             if not self.ignore_delete or not self.initial_kv.value_kind == RowKind.DELETE:
                 self.latest_kv = self.initial_kv
             self.is_initialized = True
 
-        # 如果配置了忽略删除并且是删除记录，则忽略
         if self.ignore_delete and kv.value_kind == RowKind.DELETE:
             return
 
-        # 保存最新记录
         self.latest_kv = kv
 
     def get_result(self) -> Optional[KeyValue]:
-        """
-        获取合并结果，如果只有一条记录直接返回，否则返回合并结果
-
-        Returns:
-            KeyValue记录，如果没有则返回None
-        """
         if not self.is_initialized:
             return self.initial_kv
         return self.latest_kv
 
 
 def built_comparator(key_schema: pa.Schema) -> Callable[[Any, Any], int]:
-    """
-    构建键比较器函数
-
-    Args:
-        key_schema: 键的PyArrow Schema
-
-    Returns:
-        一个比较函数，接受两个键并返回比较结果（-1, 0, 1）
-    """
 
     def comparator(key1, key2) -> int:
         if key1 is None and key2 is None:
@@ -94,13 +58,11 @@ def built_comparator(key_schema: pa.Schema) -> Callable[[Any, Any], int]:
         if key2 is None:
             return 1
 
-        # 遍历schema中的每个字段进行比较
         for i, field in enumerate(key_schema):
             field_type = field.type
             val1 = key1.get_field(i)
             val2 = key2.get_field(i)
 
-            # 处理空值情况
             if val1 is None and val2 is None:
                 continue
             if val1 is None:
@@ -108,7 +70,6 @@ def built_comparator(key_schema: pa.Schema) -> Callable[[Any, Any], int]:
             if val2 is None:
                 return 1
 
-            # 根据类型进行比较
             if pa.types.is_integer(field_type) or pa.types.is_floating(field_type) or pa.types.is_boolean(field_type):
                 if val1 < val2:
                     return -1
@@ -125,7 +86,6 @@ def built_comparator(key_schema: pa.Schema) -> Callable[[Any, Any], int]:
                 elif val1 > val2:
                     return 1
             else:
-                # 对于复杂类型，可能需要更复杂的处理
                 str_val1 = str(val1)
                 str_val2 = str(val2)
                 if str_val1 < str_val2:
@@ -133,14 +93,12 @@ def built_comparator(key_schema: pa.Schema) -> Callable[[Any, Any], int]:
                 elif str_val1 > str_val2:
                     return 1
 
-        # 所有字段都相等
         return 0
 
     return comparator
 
 
 class Element:
-    """记录在最小堆中的元素"""
 
     def __init__(self, kv, iterator: RecordIterator, reader: RecordReader):
         self.kv = kv
@@ -148,12 +106,6 @@ class Element:
         self.reader = reader
 
     def update(self) -> bool:
-        """
-        更新元素中的KeyValue
-
-        Returns:
-            如果成功更新则返回True，如果已经没有更多记录则返回False
-        """
         next_kv = self.iterator.next()
         if next_kv is None:
             return False
@@ -161,7 +113,6 @@ class Element:
         return True
 
 
-# 自定义堆条目类，使得可以在最小堆中正确比较
 class HeapEntry:
     def __init__(self, key, element: Element, key_comparator):
         self.key = key
@@ -169,14 +120,12 @@ class HeapEntry:
         self.key_comparator = key_comparator
 
     def __lt__(self, other):
-        # 首先比较键
         result = self.key_comparator(self.key, other.key)
         if result < 0:
             return True
         elif result > 0:
             return False
 
-        # 如果键相同，比较序列号
         return self.element.kv.sequence_number < other.element.kv.sequence_number
 
 

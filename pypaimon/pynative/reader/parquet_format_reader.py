@@ -44,28 +44,22 @@ class ParquetReader(FileRecordReader[InternalRow]):
         java_input_file = input_file_field.get(java_file_reader)
         self._file_path = java_input_file.getPath().toUri().toString()
 
-        # 创建dataset
         self.dataset = ds.dataset(self._file_path, format='parquet')
 
-        # 创建扫描器，应用列裁剪和过滤
         self.scanner = self.dataset.scanner(
             columns=self._projected_type,
             filter=self._filters,
             batch_size=self._batch_size
         )
 
-        # 创建批次迭代器
         self.batch_iterator = self.scanner.to_batches()
 
     def read_batch(self) -> Optional[FileRecordIterator[InternalRow]]:
-        """读取下一批数据"""
         try:
-            # 尝试读取下一批数据
             record_batch = next(self.batch_iterator, None)
             if record_batch is None:
                 return None
 
-            # 创建ColumnarRow迭代器
             return ColumnarRowIterator(
                 self._file_path,
                 record_batch

@@ -10,7 +10,6 @@ from pypaimon.pynative.record_reader_wrapper import convert_java_reader
 
 
 class DataFileRecordReader(FileRecordReader['InternalRow']):
-    """数据文件记录读取器"""
 
     def __init__(self, java_reader: JavaObject):
         reader_class = java_reader.getClass()
@@ -34,22 +33,16 @@ class DataFileRecordReader(FileRecordReader['InternalRow']):
 
         # 处理列式存储的情况
         if isinstance(iterator, ColumnarRowIterator):
-            pass
-            # print("mapping")
-            # iterator = iterator.mapping(self.partition_info, self.index_mapping)
+            iterator = iterator.mapping(self.partition_info, self.index_mapping)
         else:
-            raise Exception('unsupported type')
-            # # 处理分区信息
-            # if self.partition_info is not None:
-            #     partition_setted_row = PartitionSettedRow.from_(self.partition_info)
-            #     iterator = iterator.transform(partition_setted_row.replace_row)
-            #
-            # # 处理字段映射（投影）
-            # if self.index_mapping is not None:
-            #     projected_row = ProjectedRow.from_(self.index_mapping)
-            #     iterator = iterator.transform(projected_row.replace_row)
+            if self.partition_info is not None:
+                partition_setted_row = PartitionSettedRow.from_(self.partition_info)
+                iterator = iterator.transform(partition_setted_row.replace_row)
 
-        # 处理类型转换
+            if self.index_mapping is not None:
+                projected_row = ProjectedRow.from_(self.index_mapping)
+                iterator = iterator.transform(projected_row.replace_row)
+
         if self.cast_mapping is not None:
             raise Exception('unsupported type')
             # casted_row = CastedRow.from_(self.cast_mapping)

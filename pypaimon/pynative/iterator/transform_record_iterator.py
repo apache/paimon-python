@@ -6,7 +6,6 @@ T = TypeVar('T')
 R = TypeVar('R')
 
 class TransformRecordIterator(RecordIterator):
-    """转换记录的迭代器实现"""
 
     def __init__(self, iterator: RecordIterator, func: Callable[[T], R]):
         self.iterator = iterator

@@ -5,38 +5,34 @@ from pypaimon.pynative.row.row_kind import RowKind
 
 
 class InternalRow(ABC):
-    """
-    内部行表示，用于在处理管道中传递数据。
-    提供统一的行访问接口，可以适配不同的底层存储（PyArrow、NumPy等）。
-    """
 
     @abstractmethod
     def get_field(self, pos: int) -> Any:
-        """ xxx """
+        """get field by pos"""
 
     @abstractmethod
     def get_field_by_name(self, name: str) -> Any:
-        """ xxx """
+        """get field by name"""
 
     @abstractmethod
     def is_null_at(self, pos: int) -> bool:
-        """ xxx """
+        """is null at pos"""
 
     @abstractmethod
     def set_field(self, pos: int, value: Any) -> None:
-        """ xxx """
+        """set field by pos"""
 
     @abstractmethod
     def get_row_kind(self) -> RowKind:
-        """ xxx """
+        """get row kind"""
 
     @abstractmethod
     def set_row_kind(self, kind: RowKind) -> None:
-        """ xxx """
+        """set row kind"""
 
     @abstractmethod
     def __len__(self) -> int:
-        """ xxx """
+        """len"""
 
     def __str__(self) -> str:
         fields = []

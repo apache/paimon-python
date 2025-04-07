@@ -58,14 +58,11 @@ class ParquetReader(FileRecordReader[InternalRow]):
         self.batch_iterator = self.scanner.to_batches()
 
     def read_batch(self) -> Optional[FileRecordIterator[InternalRow]]:
-        """读取下一批数据"""
         try:
-            # 尝试读取下一批数据
             record_batch = next(self.batch_iterator, None)
             if record_batch is None:
                 return None
 
-            # 创建ColumnarRow迭代器
             return ColumnarRowIterator(
                 self._file_path,
                 record_batch
