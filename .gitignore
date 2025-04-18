@@ -1,5 +1,6 @@
 .idea/
 !.idea/vcs.xml
+.vscode/
 
 # paimon-python-java-bridge
 target

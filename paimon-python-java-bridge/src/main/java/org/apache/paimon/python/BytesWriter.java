@@ -44,11 +44,11 @@ public class BytesWriter {
 
     public BytesWriter(TableWrite tableWrite, RowType rowType) {
         this.tableWrite = tableWrite;
-        this.arrowBatchReader = new ArrowBatchReader(rowType);
+        this.arrowBatchReader = new ArrowBatchReader(rowType, true);
         this.allocator = new RootAllocator();
         arrowFields =
                 rowType.getFields().stream()
-                        .map(f -> ArrowUtils.toArrowField(f.name(), f.type()))
+                        .map(f -> ArrowUtils.toArrowField(f.name(), f.id(), f.type(), 0))
                         .collect(Collectors.toList());
     }
 
