@@ -57,6 +57,10 @@ public class InvocationUtil {
         return new BytesWriter(tableWrite, rowType);
     }
 
+    /**
+     * To resolve py4j bug: 'py4j.Py4JException: Method createReader([class java.util.ArrayList])
+     * does not exist'
+     */
     public static RecordReader<InternalRow> createReader(TableRead tableRead, List<Split> splits)
             throws IOException {
         List<ReaderSupplier<InternalRow>> readers = new ArrayList();

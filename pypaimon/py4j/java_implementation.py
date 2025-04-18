@@ -220,7 +220,7 @@ class TableRead(table_read.TableRead):
         record_generator = self.to_record_generator(splits)
 
         if os.environ.get(constants.IMPLEMENT_MODE, '') != 'py4j' and record_generator is not None:
-            return TableRead._generator_to_pyarrow_table(record_generator, self._arrow_schema)
+            return TableRead._iterator_to_pyarrow_table(record_generator, self._arrow_schema)
         else:
             record_batch_reader = self.to_arrow_batch_reader(splits)
             return pa.Table.from_batches(record_batch_reader, schema=self._arrow_schema)
@@ -282,7 +282,7 @@ class TableRead(table_read.TableRead):
             return None
 
     @staticmethod
-    def _generator_to_pyarrow_table(record_generator, arrow_schema):
+    def _iterator_to_pyarrow_table(record_generator, arrow_schema):
         """
         Converts a record generator into a pyarrow Table using the provided Arrow schema.
         """

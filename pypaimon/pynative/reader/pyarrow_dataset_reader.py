@@ -45,6 +45,7 @@ class PyArrowDatasetReader(FileRecordReader[InternalRow]):
                         key_columns.append(key_column)
                 system_columns = ["_SEQUENCE_NUMBER", "_VALUE_KIND"]
                 projection = key_columns + system_columns + projection
+            # TODO: utilize predicate to improve performance
             predicate = None
 
         if predicate is not None:
