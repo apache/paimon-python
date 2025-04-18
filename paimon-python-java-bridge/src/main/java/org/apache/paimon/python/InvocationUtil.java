@@ -18,12 +18,21 @@
 
 package org.apache.paimon.python;
 
+import org.apache.paimon.data.InternalRow;
+import org.apache.paimon.mergetree.compact.ConcatRecordReader;
+import org.apache.paimon.reader.ReaderSupplier;
+import org.apache.paimon.reader.RecordReader;
 import org.apache.paimon.table.Table;
 import org.apache.paimon.table.sink.BatchWriteBuilder;
 import org.apache.paimon.table.sink.TableWrite;
 import org.apache.paimon.table.source.ReadBuilder;
+import org.apache.paimon.table.source.Split;
 import org.apache.paimon.table.source.TableRead;
 import org.apache.paimon.types.RowType;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Call some methods in Python directly will raise py4j.Py4JException: Method method([]) does not
@@ -46,5 +55,18 @@ public class InvocationUtil {
 
     public static BytesWriter createBytesWriter(TableWrite tableWrite, RowType rowType) {
         return new BytesWriter(tableWrite, rowType);
+    }
+
+    /**
+     * To resolve py4j bug: 'py4j.Py4JException: Method createReader([class java.util.ArrayList])
+     * does not exist'
+     */
+    public static RecordReader<InternalRow> createReader(TableRead tableRead, List<Split> splits)
+            throws IOException {
+        List<ReaderSupplier<InternalRow>> readers = new ArrayList();
+        for (Split split : splits) {
+            readers.add(() -> tableRead.createReader(split));
+        }
+        return ConcatRecordReader.create(readers);
     }
 }

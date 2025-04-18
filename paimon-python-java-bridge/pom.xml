@@ -23,14 +23,14 @@
 
     <groupId>org.apache.paimon</groupId>
     <artifactId>paimon-python-java-bridge</artifactId>
-    <version>0.9-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <name>Paimon : Python-Java Bridge</name>
 
     <packaging>jar</packaging>
     <inceptionYear>2024</inceptionYear>
 
     <properties>
-        <paimon.version>0.9.0</paimon.version>
+        <paimon.version>1.0.0</paimon.version>
         <py4j.version>0.10.9.7</py4j.version>
         <slf4j.version>1.7.32</slf4j.version>
         <log4j.version>2.17.1</log4j.version>
@@ -38,7 +38,7 @@
         <spotless.delimiter>package</spotless.delimiter>
         <arrow.version>14.0.0</arrow.version>
         <target.java.version>1.8</target.java.version>
-        <paimon.ci.tools.version>0.9.0</paimon.ci.tools.version>
+        <paimon.ci.tools.version>1.0.0</paimon.ci.tools.version>
     </properties>
 
     <dependencies>

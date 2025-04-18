@@ -29,3 +29,4 @@ MAX_WORKERS = "max-workers"
 
 # ------------------ for tests (Please don't use it) ------------------
 PYPAIMON4J_TEST_MODE = '_PYPAIMON4J_TEST_MODE'
+IMPLEMENT_MODE = '_IMPLEMENT_MODE'
