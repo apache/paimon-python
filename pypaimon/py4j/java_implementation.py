@@ -219,6 +219,7 @@ class TableRead(table_read.TableRead):
     def to_arrow(self, splits: List['Split']) -> pa.Table:
         record_generator = self.to_record_generator(splits)
 
+        # If necessary, set the env constants.IMPLEMENT_MODE to 'py4j' to forcibly use py4j reader
         if os.environ.get(constants.IMPLEMENT_MODE, '') != 'py4j' and record_generator is not None:
             return TableRead._iterator_to_pyarrow_table(record_generator, self._arrow_schema)
         else:
