@@ -23,14 +23,14 @@
 
     <groupId>org.apache.paimon</groupId>
     <artifactId>paimon-python-java-bridge</artifactId>
-    <version>0.9-SNAPSHOT</version>
+    <version>1.1.1</version>
     <name>Paimon : Python-Java Bridge</name>
 
     <packaging>jar</packaging>
     <inceptionYear>2024</inceptionYear>
 
     <properties>
-        <paimon.version>0.9.0</paimon.version>
+        <paimon.version>1.1.1</paimon.version>
         <py4j.version>0.10.9.7</py4j.version>
         <slf4j.version>1.7.32</slf4j.version>
         <log4j.version>2.17.1</log4j.version>
@@ -38,8 +38,16 @@
         <spotless.delimiter>package</spotless.delimiter>
         <arrow.version>14.0.0</arrow.version>
         <target.java.version>1.8</target.java.version>
-        <paimon.ci.tools.version>0.9.0</paimon.ci.tools.version>
+        <paimon.ci.tools.version>1.1.1</paimon.ci.tools.version>
+        <jindodata.version>6.5.6</jindodata.version>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>jindodata</id>
+            <url>https://jindodata-binary.oss-cn-shanghai.aliyuncs.com/mvn-repo/</url>
+        </repository>
+    </repositories>
 
     <dependencies>
 
@@ -95,6 +103,49 @@
             <version>${py4j.version}</version>
         </dependency>
 
+        <!-- Jindo dependencies -->
+
+        <dependency>
+            <groupId>org.apache.paimon</groupId>
+            <artifactId>paimon-jindo</artifactId>
+            <version>${paimon.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.aliyun.jindodata</groupId>
+            <artifactId>jindo-sdk</artifactId>
+            <version>${jindodata.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.aliyun.jindodata</groupId>
+            <artifactId>jindo-core</artifactId>
+            <version>${jindodata.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.aliyun.jindodata</groupId>
+            <artifactId>jindo-core-linux-ubuntu22-x86_64</artifactId>
+            <version>${jindodata.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.aliyun.jindodata</groupId>
+            <artifactId>jindo-core-macos-11_0-x86_64</artifactId>
+            <version>${jindodata.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.aliyun.jindodata</groupId>
+            <artifactId>jindo-core-macos-11_0-aarch64</artifactId>
+            <version>${jindodata.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.aliyun.jindodata</groupId>
+            <artifactId>jindo-core-linux-el7-aarch64</artifactId>
+            <version>${jindodata.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -177,6 +228,13 @@
                                     <include>org.slf4j:slf4j-api</include>
                                     <include>org.apache.logging.log4j:log4j-1.2-api</include>
                                     <include>net.sf.py4j:py4j</include>
+                                    <include>org.apache.paimon:paimon-jindo</include>
+                                    <include>com.aliyun.jindodata:jindo-sdk</include>
+                                    <include>com.aliyun.jindodata:jindo-core</include>
+                                    <include>com.aliyun.jindodata:jindo-core-linux-ubuntu22-x86_64</include>
+                                    <include>com.aliyun.jindodata:jindo-core-macos-11_0-x86_64</include>
+                                    <include>com.aliyun.jindodata:jindo-core-macos-11_0-aarch64</include>
+                                    <include>com.aliyun.jindodata:jindo-core-linux-el7-aarch64</include>
                                 </includes>
                             </artifactSet>
                             <transformers combine.children="append">
