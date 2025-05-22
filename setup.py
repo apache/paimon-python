@@ -66,6 +66,12 @@ setup(
         "pypaimon.hadoop-deps": ["*.jar"]
     },
     install_requires=install_requires,
+    extras_require={
+        'avro': [
+            'fastavro>=1.9.0',
+            'zstandard>=0.23.0'
+        ]
+    },
     description='Apache Paimon Python API',
     long_description=long_description,
     long_description_content_type='text/markdown',

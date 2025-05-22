@@ -15,6 +15,7 @@
 #  See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
+import os
 
 # pypaimon.api implementation based on Java code & py4j lib
 
@@ -29,6 +30,11 @@ from pypaimon.api import \
      table_read, write_builder, table_write, commit_message,
      table_commit, Schema, predicate)
 from typing import List, Iterator, Optional, Any, TYPE_CHECKING
+
+from pypaimon.pynative.common.exception import PyNativeNotImplementedError
+from pypaimon.pynative.common.predicate import PyNativePredicate
+from pypaimon.pynative.common.row.internal_row import InternalRow
+from pypaimon.pynative.util.reader_converter import ReaderConverter
 
 if TYPE_CHECKING:
     import ray
@@ -72,7 +78,12 @@ class Table(table.Table):
 
     def new_read_builder(self) -> 'ReadBuilder':
         j_read_builder = get_gateway().jvm.InvocationUtil.getReadBuilder(self._j_table)
-        return ReadBuilder(j_read_builder, self._j_table.rowType(), self._catalog_options)
+        if self._j_table.primaryKeys().isEmpty():
+            primary_keys = None
+        else:
+            primary_keys = [str(key) for key in self._j_table.primaryKeys()]
+        return ReadBuilder(j_read_builder, self._j_table.rowType(), self._catalog_options,
+                           primary_keys)
 
     def new_batch_write_builder(self) -> 'BatchWriteBuilder':
         java_utils.check_batch_write(self._j_table)
@@ -82,16 +93,21 @@ class Table(table.Table):
 
 class ReadBuilder(read_builder.ReadBuilder):
 
-    def __init__(self, j_read_builder, j_row_type, catalog_options: dict):
+    def __init__(self, j_read_builder, j_row_type, catalog_options: dict, primary_keys: List[str]):
         self._j_read_builder = j_read_builder
         self._j_row_type = j_row_type
         self._catalog_options = catalog_options
+        self._primary_keys = primary_keys
+        self._predicate = None
+        self._projection = None
 
     def with_filter(self, predicate: 'Predicate'):
+        self._predicate = predicate
         self._j_read_builder.withFilter(predicate.to_j_predicate())
         return self
 
     def with_projection(self, projection: List[str]) -> 'ReadBuilder':
+        self._projection = projection
         field_names = list(map(lambda field: field.name(), self._j_row_type.getFields()))
         int_projection = list(map(lambda p: field_names.index(p), projection))
         gateway = get_gateway()
@@ -111,7 +127,8 @@ class ReadBuilder(read_builder.ReadBuilder):
 
     def new_read(self) -> 'TableRead':
         j_table_read = self._j_read_builder.newRead().executeFilter()
-        return TableRead(j_table_read, self._j_read_builder.readType(), self._catalog_options)
+        return TableRead(j_table_read, self._j_read_builder.readType(), self._catalog_options,
+                         self._predicate, self._projection, self._primary_keys)
 
     def new_predicate_builder(self) -> 'PredicateBuilder':
         return PredicateBuilder(self._j_row_type)
@@ -185,14 +202,29 @@ class Split(split.Split):
 
 class TableRead(table_read.TableRead):
 
-    def __init__(self, j_table_read, j_read_type, catalog_options):
+    def __init__(self, j_table_read, j_read_type, catalog_options, predicate, projection,
+                 primary_keys: List[str]):
+        self._j_table_read = j_table_read
+        self._j_read_type = j_read_type
+        self._catalog_options = catalog_options
+
+        self._predicate = predicate
+        self._projection = projection
+        self._primary_keys = primary_keys
+
         self._arrow_schema = java_utils.to_arrow_schema(j_read_type)
         self._j_bytes_reader = get_gateway().jvm.InvocationUtil.createParallelBytesReader(
             j_table_read, j_read_type, TableRead._get_max_workers(catalog_options))
 
-    def to_arrow(self, splits):
-        record_batch_reader = self.to_arrow_batch_reader(splits)
-        return pa.Table.from_batches(record_batch_reader, schema=self._arrow_schema)
+    def to_arrow(self, splits: List['Split']) -> pa.Table:
+        record_generator = self.to_record_generator(splits)
+
+        # If necessary, set the env constants.IMPLEMENT_MODE to 'py4j' to forcibly use py4j reader
+        if os.environ.get(constants.IMPLEMENT_MODE, '') != 'py4j' and record_generator is not None:
+            return TableRead._iterator_to_pyarrow_table(record_generator, self._arrow_schema)
+        else:
+            record_batch_reader = self.to_arrow_batch_reader(splits)
+            return pa.Table.from_batches(record_batch_reader, schema=self._arrow_schema)
 
     def to_arrow_batch_reader(self, splits):
         j_splits = list(map(lambda s: s.to_j_split(), splits))
@@ -218,6 +250,60 @@ class TableRead(table_read.TableRead):
         import ray
 
         return ray.data.from_arrow(self.to_arrow(splits))
+
+    def to_record_generator(self, splits: List['Split']) -> Optional[Iterator[Any]]:
+        """
+        Returns a generator for iterating over records in the table.
+        If pynative reader is not available, returns None.
+        """
+        try:
+            j_splits = list(s.to_j_split() for s in splits)
+            j_reader = get_gateway().jvm.InvocationUtil.createReader(self._j_table_read, j_splits)
+            converter = ReaderConverter(self._predicate, self._projection, self._primary_keys)
+            pynative_reader = converter.convert_java_reader(j_reader)
+
+            def _record_generator():
+                try:
+                    batch = pynative_reader.read_batch()
+                    while batch is not None:
+                        record = batch.next()
+                        while record is not None:
+                            yield record
+                            record = batch.next()
+                        batch.release_batch()
+                        batch = pynative_reader.read_batch()
+                finally:
+                    pynative_reader.close()
+
+            return _record_generator()
+
+        except PyNativeNotImplementedError as e:
+            print(f"Generating pynative reader failed, will use py4j reader instead, "
+                  f"error message: {str(e)}")
+            return None
+
+    @staticmethod
+    def _iterator_to_pyarrow_table(record_generator, arrow_schema):
+        """
+        Converts a record generator into a pyarrow Table using the provided Arrow schema.
+        """
+        record_batches = []
+        current_batch = []
+        batch_size = 1024  # Can be adjusted according to needs for batch size
+
+        for record in record_generator:
+            record_dict = {field: record.get_field(i) for i, field in enumerate(arrow_schema.names)}
+            current_batch.append(record_dict)
+            if len(current_batch) >= batch_size:
+                batch = pa.RecordBatch.from_pylist(current_batch, schema=arrow_schema)
+                record_batches.append(batch)
+                current_batch = []
+
+        if current_batch:
+            batch = pa.RecordBatch.from_pylist(current_batch, schema=arrow_schema)
+            record_batches.append(batch)
+
+        return pa.Table.from_batches(record_batches, schema=arrow_schema)
 
     @staticmethod
     def _get_max_workers(catalog_options):
@@ -317,11 +403,15 @@ class BatchTableCommit(table_commit.BatchTableCommit):
 
 class Predicate(predicate.Predicate):
 
-    def __init__(self, j_predicate_bytes):
+    def __init__(self, py_predicate: PyNativePredicate, j_predicate_bytes):
+        self.py_predicate = py_predicate
         self._j_predicate_bytes = j_predicate_bytes
 
     def to_j_predicate(self):
         return deserialize_java_object(self._j_predicate_bytes)
+
+    def test(self, record: InternalRow) -> bool:
+        return self.py_predicate.test(record)
 
 
 class PredicateBuilder(predicate.PredicateBuilder):
@@ -350,7 +440,8 @@ class PredicateBuilder(predicate.PredicateBuilder):
             index,
             literals
         )
-        return Predicate(serialize_java_object(j_predicate))
+        return Predicate(PyNativePredicate(method, index, field, literals),
+                         serialize_java_object(j_predicate))
 
     def equal(self, field: str, literal: Any) -> Predicate:
         return self._build('equal', field, [literal])
@@ -396,11 +487,13 @@ class PredicateBuilder(predicate.PredicateBuilder):
         return self._build('between', field, [included_lower_bound, included_upper_bound])
 
     def and_predicates(self, predicates: List[Predicate]) -> Predicate:
-        predicates = list(map(lambda p: p.to_j_predicate(), predicates))
-        j_predicate = get_gateway().jvm.PredicationUtil.buildAnd(predicates)
-        return Predicate(serialize_java_object(j_predicate))
+        j_predicates = list(map(lambda p: p.to_j_predicate(), predicates))
+        j_predicate = get_gateway().jvm.PredicationUtil.buildAnd(j_predicates)
+        return Predicate(PyNativePredicate('and', None, None, predicates),
+                         serialize_java_object(j_predicate))
 
     def or_predicates(self, predicates: List[Predicate]) -> Predicate:
-        predicates = list(map(lambda p: p.to_j_predicate(), predicates))
-        j_predicate = get_gateway().jvm.PredicationUtil.buildOr(predicates)
-        return Predicate(serialize_java_object(j_predicate))
+        j_predicates = list(map(lambda p: p.to_j_predicate(), predicates))
+        j_predicate = get_gateway().jvm.PredicationUtil.buildOr(j_predicates)
+        return Predicate(PyNativePredicate('or', None, None, predicates),
+                         serialize_java_object(j_predicate))
