@@ -18,8 +18,8 @@
 
 from typing import Optional, TypeVar
 
-from pypaimon import Predicate
-from pypaimon.pynative.reader.core.record_reader import RecordIterator, RecordReader
+from pypaimon.api import Predicate
+from pypaimon.pynative.reader.common.record_reader import RecordIterator, RecordReader
 
 T = TypeVar('T')
 

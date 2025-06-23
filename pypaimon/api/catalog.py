@@ -18,7 +18,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Optional
-from pypaimon.api import Table, Schema
+from pypaimon.api import Table, Schema, Database
 
 
 class Catalog(ABC):
@@ -27,10 +27,9 @@ class Catalog(ABC):
     metadata such as database/table from a paimon catalog.
     """
 
-    @staticmethod
     @abstractmethod
-    def create(catalog_options: dict) -> 'Catalog':
-        """Create catalog from configuration."""
+    def get_database(self, name: str) -> 'Database':
+        """Get paimon database identified by the given name."""
 
     @abstractmethod
     def get_table(self, identifier: str) -> Table:

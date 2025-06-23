@@ -18,8 +18,8 @@
 
 from typing import Any
 
-from pypaimon.pynative.common.row.internal_row import InternalRow
-from pypaimon.pynative.common.row.row_kind import RowKind
+from pypaimon.pynative.reader.row.internal_row import InternalRow
+from pypaimon.pynative.reader.row.row_kind import RowKind
 
 
 class OffsetRow(InternalRow):

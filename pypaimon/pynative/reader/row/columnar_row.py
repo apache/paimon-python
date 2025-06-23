@@ -16,57 +16,48 @@
 # limitations under the License.
 ################################################################################
 
-from abc import ABC, abstractmethod
 from typing import Any
 
-from pypaimon.pynative.common.row.row_kind import RowKind
+import pyarrow as pa
+
+from pypaimon.pynative.reader.row.internal_row import InternalRow
+from pypaimon.pynative.reader.row.key_value import RowKind
 
 
-class InternalRow(ABC):
+class ColumnarRow(InternalRow):
     """
-    Base interface for an internal data structure representing data of RowType.
+    Columnar row to support access to vector column data. It is a row based on PyArrow RecordBatch
     """
 
-    @abstractmethod
+    def __init__(self, record_batch: pa.RecordBatch, row_id: int = 0,
+                 row_kind: RowKind = RowKind.INSERT):
+        self._batch = record_batch
+        self._row_id = row_id
+        self._row_kind = row_kind
+
+    def get_row_id(self) -> int:
+        return self._row_id
+
+    def set_row_id(self, row_id: int) -> None:
+        self._row_id = row_id
+
+    def batch(self) -> pa.RecordBatch:
+        return self._batch
+
     def get_field(self, pos: int) -> Any:
-        """
-        Returns the value at the given position.
-        """
+        return self._batch.column(pos)[self._row_id].as_py()
 
-    @abstractmethod
     def is_null_at(self, pos: int) -> bool:
-        """
-        Returns true if the element is null at the given position.
-        """
+        return self._batch.column(pos).is_null(self._row_id)
 
-    @abstractmethod
     def set_field(self, pos: int, value: Any) -> None:
-        """
-        set element to a row at the given position.
-        """
+        raise NotImplementedError()
 
-    @abstractmethod
     def get_row_kind(self) -> RowKind:
-        """
-        Returns the kind of change that this row describes in a changelog.
-        """
+        return self._row_kind
 
-    @abstractmethod
     def set_row_kind(self, kind: RowKind) -> None:
-        """
-        Sets the kind of change that this row describes in a changelog.
-        """
+        self._row_kind = kind
 
-    @abstractmethod
     def __len__(self) -> int:
-        """
-        Returns the number of fields in this row.
-        The number does not include RowKind. It is kept separately.
-        """
-
-    def __str__(self) -> str:
-        fields = []
-        for pos in range(self.__len__()):
-            value = self.get_field(pos)
-            fields.append(str(value))
-        return " ".join(fields)
+        return self._batch.num_columns

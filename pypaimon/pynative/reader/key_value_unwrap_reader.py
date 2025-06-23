@@ -18,11 +18,11 @@
 
 from typing import Any, Optional
 
-from pypaimon.pynative.common.row.internal_row import InternalRow
-from pypaimon.pynative.common.row.key_value import KeyValue
-from pypaimon.pynative.common.row.row_kind import RowKind
-from pypaimon.pynative.reader.core.record_iterator import RecordIterator
-from pypaimon.pynative.reader.core.record_reader import RecordReader
+from pypaimon.pynative.reader.row.internal_row import InternalRow
+from pypaimon.pynative.reader.row.key_value import KeyValue
+from pypaimon.pynative.reader.row.row_kind import RowKind
+from pypaimon.pynative.reader.common.record_iterator import RecordIterator
+from pypaimon.pynative.reader.common.record_reader import RecordReader
 
 
 class KeyValueUnwrapReader(RecordReader[InternalRow]):

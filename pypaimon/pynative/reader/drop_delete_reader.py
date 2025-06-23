@@ -18,9 +18,9 @@
 
 from typing import Optional
 
-from pypaimon.pynative.common.row.key_value import KeyValue
-from pypaimon.pynative.reader.core.record_iterator import RecordIterator
-from pypaimon.pynative.reader.core.record_reader import RecordReader
+from pypaimon.pynative.reader.row.key_value import KeyValue
+from pypaimon.pynative.reader.common.record_iterator import RecordIterator
+from pypaimon.pynative.reader.common.record_reader import RecordReader
 
 
 class DropDeleteReader(RecordReader):

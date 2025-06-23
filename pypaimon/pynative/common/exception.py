@@ -17,5 +17,6 @@
 ################################################################################
 
 class PyNativeNotImplementedError(NotImplementedError):
-    """ Method or function hasn't been implemented by py-native paimon yet. """
-    pass
+    """ Method or property hasn't been implemented by py-native paimon yet. """
+    def __init__(self, name):
+        super().__init__(f"Feature '{name}' hasn't been implemented by py-native paimon.")

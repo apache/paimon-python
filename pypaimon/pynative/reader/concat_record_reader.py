@@ -20,8 +20,8 @@ from typing import Optional
 
 from py4j.java_gateway import JavaObject
 
-from pypaimon.pynative.reader.core.record_iterator import RecordIterator
-from pypaimon.pynative.reader.core.record_reader import RecordReader
+from pypaimon.pynative.reader.common.record_iterator import RecordIterator
+from pypaimon.pynative.reader.common.record_reader import RecordReader
 
 
 class ConcatRecordReader(RecordReader):
