@@ -16,22 +16,27 @@
 # limitations under the License.
 ################################################################################
 
-from abc import abstractmethod
-from typing import Optional, TypeVar
+from abc import ABC, abstractmethod
+from typing import Generic, Optional, TypeVar
 
-from pypaimon.pynative.reader.core.file_record_iterator import FileRecordIterator
-from pypaimon.pynative.reader.core.record_reader import RecordReader
+from pypaimon.pynative.reader.common.record_iterator import RecordIterator
 
 T = TypeVar('T')
 
 
-class FileRecordReader(RecordReader[T]):
+class RecordReader(Generic[T], ABC):
     """
-    A RecordReader to support returning FileRecordIterator.
+    The reader that reads the batches of records.
     """
 
     @abstractmethod
-    def read_batch(self) -> Optional[FileRecordIterator]:
+    def read_batch(self) -> Optional[RecordIterator[T]]:
         """
-        Reads one batch
+        Reads one batch. The method should return null when reaching the end of the input.
+        """
+
+    @abstractmethod
+    def close(self):
+        """
+        Closes the reader and should release all resources.
         """

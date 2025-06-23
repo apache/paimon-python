@@ -20,11 +20,11 @@ from typing import Optional, List
 
 import pyarrow.dataset as ds
 
-from pypaimon import Predicate
-from pypaimon.pynative.common.row.internal_row import InternalRow
-from pypaimon.pynative.reader.core.columnar_row_iterator import ColumnarRowIterator
-from pypaimon.pynative.reader.core.file_record_iterator import FileRecordIterator
-from pypaimon.pynative.reader.core.file_record_reader import FileRecordReader
+from pypaimon.api import Predicate
+from pypaimon.pynative.reader.row.internal_row import InternalRow
+from pypaimon.pynative.reader.common.columnar_row_iterator import ColumnarRowIterator
+from pypaimon.pynative.reader.common.file_record_iterator import FileRecordIterator
+from pypaimon.pynative.reader.common.file_record_reader import FileRecordReader
 from pypaimon.pynative.util.predicate_converter import convert_predicate
 
 

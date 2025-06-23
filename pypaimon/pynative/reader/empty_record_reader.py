@@ -18,8 +18,8 @@
 
 from typing import Optional
 
-from pypaimon.pynative.reader.core.file_record_reader import FileRecordReader
-from pypaimon.pynative.reader.core.record_iterator import RecordIterator
+from pypaimon.pynative.reader.common.file_record_reader import FileRecordReader
+from pypaimon.pynative.reader.common.record_iterator import RecordIterator
 
 
 class EmptyFileRecordReader(FileRecordReader):

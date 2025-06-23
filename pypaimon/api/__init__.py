@@ -25,7 +25,9 @@ from .commit_message import CommitMessage
 from .table_commit import BatchTableCommit
 from .table_write import BatchTableWrite
 from .write_builder import BatchWriteBuilder
-from .table import Table, Schema
+from .schema import Schema
+from .table import Table
+from .database import Database
 from .catalog import Catalog
 
 __all__ = [

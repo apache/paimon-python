@@ -16,28 +16,22 @@
 # limitations under the License.
 ################################################################################
 
-from abc import ABC, abstractmethod
-from typing import TypeVar
+from abc import abstractmethod
+from typing import Optional, TypeVar
 
-from pypaimon.pynative.reader.core.record_iterator import RecordIterator
+from pypaimon.pynative.reader.common.file_record_iterator import FileRecordIterator
+from pypaimon.pynative.reader.common.record_reader import RecordReader
 
 T = TypeVar('T')
 
 
-class FileRecordIterator(RecordIterator[T], ABC):
+class FileRecordReader(RecordReader[T]):
     """
-    A RecordIterator to support returning the record's row position and file Path.
+    A RecordReader to support returning FileRecordIterator.
     """
 
     @abstractmethod
-    def returned_position(self) -> int:
+    def read_batch(self) -> Optional[FileRecordIterator]:
         """
-        Get the row position of the row returned by next().
-        Returns: the row position from 0 to the number of rows in the file
-        """
-
-    @abstractmethod
-    def file_path(self) -> str:
-        """
-        Returns: the file path
+        Reads one batch
         """

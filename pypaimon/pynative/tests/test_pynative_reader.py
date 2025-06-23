@@ -19,7 +19,7 @@
 import pandas as pd
 import pyarrow as pa
 
-from pypaimon import Schema
+from pypaimon.api import Schema
 from pypaimon.py4j.tests import PypaimonTestBase
 
 
@@ -178,7 +178,7 @@ class NativeReaderTest(PypaimonTestBase):
 
     def testPkParquetReader(self):
         schema = Schema(self.pk_pa_schema, primary_keys=['f0'], options={
-            'bucket': '1'
+            'bucket': '2'
         })
         self.catalog.create_table('default.test_pk_parquet', schema, False)
         table = self.catalog.get_table('default.test_pk_parquet')

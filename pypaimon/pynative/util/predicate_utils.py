@@ -23,7 +23,7 @@ def filter_predicate_by_primary_keys(predicate, primary_keys):
     """
     Filter out predicates that are not related to primary key fields.
     """
-    from pypaimon import Predicate
+    from pypaimon.api import Predicate
 
     if predicate is None or primary_keys is None:
         return predicate

@@ -16,27 +16,28 @@
 # limitations under the License.
 ################################################################################
 
-from dataclasses import dataclass
+from abc import ABC, abstractmethod
+from typing import TypeVar
 
-from pypaimon.pynative.common.row.internal_row import InternalRow
-from pypaimon.pynative.common.row.row_kind import RowKind
+from pypaimon.pynative.reader.common.record_iterator import RecordIterator
 
-"""
-A key value, including user key, sequence number, value kind and value.
-"""
+T = TypeVar('T')
 
 
-@dataclass
-class KeyValue:
-    key: InternalRow
-    sequence_number: int
-    value_kind: RowKind
-    value: InternalRow
-    level: int = -1
+class FileRecordIterator(RecordIterator[T], ABC):
+    """
+    A RecordIterator to support returning the record's row position and file Path.
+    """
 
-    def set_level(self, level: int) -> 'KeyValue':
-        self.level = level
-        return self
+    @abstractmethod
+    def returned_position(self) -> int:
+        """
+        Get the row position of the row returned by next().
+        Returns: the row position from 0 to the number of rows in the file
+        """
 
-    def is_add(self) -> bool:
-        return self.value_kind.is_add()
+    @abstractmethod
+    def file_path(self) -> str:
+        """
+        Returns: the file path
+        """

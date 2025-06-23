@@ -20,9 +20,9 @@ from typing import Optional
 
 import pyarrow as pa
 
-from pypaimon.pynative.common.row.columnar_row import ColumnarRow
-from pypaimon.pynative.common.row.key_value import InternalRow
-from pypaimon.pynative.reader.core.file_record_iterator import FileRecordIterator
+from pypaimon.pynative.reader.row.columnar_row import ColumnarRow
+from pypaimon.pynative.reader.row.key_value import InternalRow
+from pypaimon.pynative.reader.common.file_record_iterator import FileRecordIterator
 
 
 class ColumnarRowIterator(FileRecordIterator[InternalRow]):

@@ -18,10 +18,10 @@
 
 from typing import Optional
 
-from pypaimon.pynative.common.row.internal_row import InternalRow
-from pypaimon.pynative.reader.core.file_record_iterator import FileRecordIterator
-from pypaimon.pynative.reader.core.file_record_reader import FileRecordReader
-from pypaimon.pynative.reader.core.record_reader import RecordReader
+from pypaimon.pynative.reader.row.internal_row import InternalRow
+from pypaimon.pynative.reader.common.file_record_iterator import FileRecordIterator
+from pypaimon.pynative.reader.common.file_record_reader import FileRecordReader
+from pypaimon.pynative.reader.common.record_reader import RecordReader
 
 
 class DataFileRecordReader(FileRecordReader[InternalRow]):

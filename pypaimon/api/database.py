@@ -14,29 +14,15 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 # limitations under the License.
-################################################################################
+#################################################################################
 
-from abc import ABC, abstractmethod
-from typing import Generic, Optional, TypeVar
-
-from pypaimon.pynative.reader.core.record_iterator import RecordIterator
-
-T = TypeVar('T')
+from typing import Optional
 
 
-class RecordReader(Generic[T], ABC):
-    """
-    The reader that reads the batches of records.
-    """
+class Database:
+    """Structure of a Database."""
 
-    @abstractmethod
-    def read_batch(self) -> Optional[RecordIterator[T]]:
-        """
-        Reads one batch. The method should return null when reaching the end of the input.
-        """
-
-    @abstractmethod
-    def close(self):
-        """
-        Closes the reader and should release all resources.
-        """
+    def __init__(self, name: str, properties: dict, comment: Optional[str] = None):
+        self.name = name
+        self.properties = properties
+        self.comment = comment

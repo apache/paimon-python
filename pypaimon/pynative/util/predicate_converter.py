@@ -23,7 +23,7 @@ import pyarrow.compute as pc
 import pyarrow.dataset as ds
 from pyarrow.dataset import Expression
 
-from pypaimon import Predicate
+from pypaimon.api import Predicate
 
 
 def convert_predicate(predicate: Predicate) -> Expression | bool:

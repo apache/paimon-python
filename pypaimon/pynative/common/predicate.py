@@ -19,7 +19,7 @@
 from dataclasses import dataclass
 from typing import Any, List, Optional
 
-from pypaimon.pynative.common.row.internal_row import InternalRow
+from pypaimon.pynative.reader.row.internal_row import InternalRow
 
 
 @dataclass

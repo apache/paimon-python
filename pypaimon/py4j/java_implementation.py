@@ -33,7 +33,7 @@ from typing import List, Iterator, Optional, Any, TYPE_CHECKING
 
 from pypaimon.pynative.common.exception import PyNativeNotImplementedError
 from pypaimon.pynative.common.predicate import PyNativePredicate
-from pypaimon.pynative.common.row.internal_row import InternalRow
+from pypaimon.pynative.reader.row.internal_row import InternalRow
 from pypaimon.pynative.util.reader_converter import ReaderConverter
 
 if TYPE_CHECKING:
@@ -42,6 +42,10 @@ if TYPE_CHECKING:
 
 
 class Catalog(catalog.Catalog):
+
+    @staticmethod
+    def identifier() -> str:
+        pass # TODO
 
     def __init__(self, j_catalog, catalog_options: dict):
         self._j_catalog = j_catalog
