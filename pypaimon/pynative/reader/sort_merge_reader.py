@@ -196,11 +196,18 @@ class SortMergeIterator(RecordIterator):
 
 
 class SortMergeReader:
-    def __init__(self, readers, primary_keys):
+    def __init__(self, readers, primary_keys, partition_keys):
         self.next_batch_readers = list(readers)
         self.merge_function = DeduplicateMergeFunction(False)
 
-        key_columns = [f"_KEY_{pk}" for pk in primary_keys]
+        if partition_keys:
+            trimmed_primary_keys = [pk for pk in primary_keys if pk not in partition_keys]
+            if not trimmed_primary_keys:
+                raise ValueError(f"Primary key constraint {primary_keys} same with partition fields")
+        else:
+            trimmed_primary_keys = primary_keys
+
+        key_columns = [f"_KEY_{pk}" for pk in trimmed_primary_keys]
         key_schema = pa.schema([pa.field(column, pa.string()) for column in key_columns])
         self.user_key_comparator = built_comparator(key_schema)
 

@@ -32,7 +32,7 @@ class ColumnarRowIterator(FileRecordIterator[InternalRow]):
 
     def __init__(self, file_path: str, record_batch: pa.RecordBatch):
         self.file_path = file_path
-        self._record_batch = record_batch
+        self.record_batch = record_batch
         self._row = ColumnarRow(record_batch)
 
         self.num_rows = record_batch.num_rows
@@ -58,4 +58,4 @@ class ColumnarRowIterator(FileRecordIterator[InternalRow]):
         self.next_file_pos = next_file_pos
 
     def release_batch(self):
-        del self._record_batch
+        del self.record_batch

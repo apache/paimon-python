@@ -72,11 +72,12 @@ class ReaderConverter:
     # Convert Java RecordReader to Python RecordReader
     """
 
-    def __init__(self, predicate, projection, primary_keys: List[str]):
+    def __init__(self, predicate, projection, primary_keys: List[str], partition_keys: List[str]):
         self.reader_mapping = reader_mapping
         self._predicate = predicate
         self._projection = projection
         self._primary_keys = primary_keys
+        self._partition_keys = partition_keys or []
 
     def convert_java_reader(self, java_reader: JavaObject) -> RecordReader:
         java_class_name = java_reader.getClass().getName()
@@ -84,6 +85,6 @@ class ReaderConverter:
             if os.environ.get(constants.PYPAIMON4J_TEST_MODE) == "true":
                 print("converting Java reader: " + str(java_class_name))
             return reader_mapping[java_class_name](java_reader, self, self._predicate,
-                                                   self._projection, self._primary_keys)
+                                                   self._projection, self._primary_keys, self._partition_keys)
         else:
             raise PyNativeNotImplementedError(f"Unsupported RecordReader type: {java_class_name}")
