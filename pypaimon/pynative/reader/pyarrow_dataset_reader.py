@@ -35,16 +35,9 @@ class PyArrowDatasetReader(FileRecordReader[InternalRow]):
     """
 
     def __init__(self, format, file_path, batch_size, projection,
-                 predicate: Predicate, primary_keys: List[str]):
+                 predicate: Predicate, primary_keys: List[str], fields: List[str]):
+
         if primary_keys is not None:
-            if projection is not None:
-                key_columns = []
-                for pk in primary_keys:
-                    key_column = f"_KEY_{pk}"
-                    if key_column not in projection:
-                        key_columns.append(key_column)
-                system_columns = ["_SEQUENCE_NUMBER", "_VALUE_KIND"]
-                projection = key_columns + system_columns + projection
             # TODO: utilize predicate to improve performance
             predicate = None
 
@@ -54,7 +47,7 @@ class PyArrowDatasetReader(FileRecordReader[InternalRow]):
         self._file_path = file_path
         self.dataset = ds.dataset(file_path, format=format)
         self.scanner = self.dataset.scanner(
-            columns=projection,
+            columns=fields,
             filter=predicate,
             batch_size=batch_size
         )

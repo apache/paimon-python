@@ -82,8 +82,12 @@ class Table(table.Table):
             primary_keys = None
         else:
             primary_keys = [str(key) for key in self._j_table.primaryKeys()]
+        if self._j_table.partitionKeys().isEmpty():
+            partition_keys = None
+        else:
+            partition_keys = [str(key) for key in self._j_table.partitionKeys()]
         return ReadBuilder(j_read_builder, self._j_table.rowType(), self._catalog_options,
-                           primary_keys)
+                           primary_keys, partition_keys)
 
     def new_batch_write_builder(self) -> 'BatchWriteBuilder':
         java_utils.check_batch_write(self._j_table)
@@ -93,11 +97,12 @@ class Table(table.Table):
 
 class ReadBuilder(read_builder.ReadBuilder):
 
-    def __init__(self, j_read_builder, j_row_type, catalog_options: dict, primary_keys: List[str]):
+    def __init__(self, j_read_builder, j_row_type, catalog_options: dict, primary_keys: List[str], partition_keys: List[str]):
         self._j_read_builder = j_read_builder
         self._j_row_type = j_row_type
         self._catalog_options = catalog_options
         self._primary_keys = primary_keys
+        self._partition_keys = partition_keys
         self._predicate = None
         self._projection = None
 
@@ -128,7 +133,7 @@ class ReadBuilder(read_builder.ReadBuilder):
     def new_read(self) -> 'TableRead':
         j_table_read = self._j_read_builder.newRead().executeFilter()
         return TableRead(j_table_read, self._j_read_builder.readType(), self._catalog_options,
-                         self._predicate, self._projection, self._primary_keys)
+                         self._predicate, self._projection, self._primary_keys, self._partition_keys)
 
     def new_predicate_builder(self) -> 'PredicateBuilder':
         return PredicateBuilder(self._j_row_type)
@@ -203,7 +208,7 @@ class Split(split.Split):
 class TableRead(table_read.TableRead):
 
     def __init__(self, j_table_read, j_read_type, catalog_options, predicate, projection,
-                 primary_keys: List[str]):
+                 primary_keys: List[str], partition_keys: List[str]):
         self._j_table_read = j_table_read
         self._j_read_type = j_read_type
         self._catalog_options = catalog_options
@@ -211,6 +216,7 @@ class TableRead(table_read.TableRead):
         self._predicate = predicate
         self._projection = projection
         self._primary_keys = primary_keys
+        self._partition_keys = partition_keys
 
         self._arrow_schema = java_utils.to_arrow_schema(j_read_type)
         self._j_bytes_reader = get_gateway().jvm.InvocationUtil.createParallelBytesReader(
@@ -259,7 +265,7 @@ class TableRead(table_read.TableRead):
         try:
             j_splits = list(s.to_j_split() for s in splits)
             j_reader = get_gateway().jvm.InvocationUtil.createReader(self._j_table_read, j_splits)
-            converter = ReaderConverter(self._predicate, self._projection, self._primary_keys)
+            converter = ReaderConverter(self._predicate, self._projection, self._primary_keys, self._partition_keys)
             pynative_reader = converter.convert_java_reader(j_reader)
 
             def _record_generator():
