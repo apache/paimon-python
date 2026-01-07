@@ -1,3 +1,7 @@
+## This repository has been abandoned, and PyPaimon has already been implemented in the main repository
+
+See https://github.com/apache/paimon/tree/master/paimon-python
+
 ![Paimon](https://github.com/apache/paimon/blob/master/docs/static/paimon-simple.png)
 
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
